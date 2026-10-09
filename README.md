@@ -1,56 +1,48 @@
-# Welcome to your Expo app 👋
+# Tecnocar-Pro (app Taller–Cliente)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+App móvil con Expo (SDK 57, Expo Router, TypeScript) que implementa las pantallas del diseño: admin master, taller, ayudante y cliente.
 
-## Get started
-
-1. Install dependencies
-
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Correrla
 
 ```bash
-npm run reset-project
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Abre el QR con la app **Expo Go** (Android o iOS) o presiona `w` para verla en el navegador.
+La cámara (escanear QR, fotos) funciona en el teléfono; en el navegador usa la galería.
 
-### Other setup steps
+## Qué hay
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+| Rol | Pantallas |
+| --- | --- |
+| Inicio | Entrada y elegir rol (el acceso con código por WhatsApp llega con el servidor) |
+| Admin master | Talleres con mapa y filtros, detalle (activar/pausar), alta de taller, panel de conteos |
+| Taller | Tablero por estado, nuevo expediente en 4 pasos (datos, inspección de 15 puntos y gasolina, fotos y golpes, servicio y firma), expediente, costos con ganancia, QR real, ayudantes con foto y pagos, reportes |
+| Ayudante | Mis coches, actualizar avance con nota y fotos, mis pagos (nunca ve costos ni ganancia) |
+| Cliente | Escanear QR con la cámara, estado del coche con historial, pantalla de "listo" con solo el total, mapa de talleres (fase 3) |
 
-## Learn more
+Los cambios de estado, costos y asignaciones se reflejan entre roles dentro de la sesión: crea un coche como taller, mándalo a "Listo" y míralo como cliente.
 
-To learn more about developing your project with Expo, look at the following resources:
+## Estructura
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```
+src/app/            rutas (Expo Router): (admin), (taller), (ayudante), (cliente) y pantallas de detalle
+src/components/     UI de la marca, mapa de ejemplo, fotos, firma, línea de tiempo
+src/store/app.tsx   estado de la app (en memoria)
+src/data/seed.ts    datos de ejemplo
+src/lib/money.ts    subtotal, IVA, total y ganancia libre
+```
 
-## Join the community
+## Lo que todavía es de mentira
 
-Join our community of developers creating universal apps.
+- **Sin servidor:** los datos viven en memoria y se pierden al cerrar la app. El siguiente paso es Supabase (login por teléfono, base de datos y reglas de acceso por fila para que el cliente nunca pueda leer el desglose ni la ganancia).
+- **Mapa:** es un dibujo de ejemplo. En la fase 3 se cambia por un mapa real con búsqueda por distancia.
+- **QR:** ya es un QR real, pero abre la app por su esquema (`tallerapp://q/<token>`). Con el servidor será un link web que muestra el estado aunque el cliente no tenga la app.
+- **Avisos** por WhatsApp o push, impresión de la orden y modo sin internet: fases siguientes.
+- El nombre "Tecnocar-Pro", los iconos y el splash son provisionales.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Notas
+
+- Instala librerías con `npx expo install <paquete>` para que queden en la versión del SDK.
+- Antes de entregar cambios: `npx tsc --noEmit` y `npx expo lint`.

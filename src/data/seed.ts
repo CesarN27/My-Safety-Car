@@ -1,0 +1,282 @@
+import { INSPECTION_POINTS } from '@/types';
+import type { Car, CarState, CostItem, Helper, InspState, LogEntry, Shop } from '@/types';
+
+const minsAgo = (m: number) => new Date(Date.now() - m * 60000).toISOString();
+
+export const SHOP_NAME = 'Tecnocar-Pro';
+export const OWNER_NAME = 'César';
+export const DEMO_CLIENT = { name: 'Laura Méndez', phone: '55 3021 7788' };
+export const DEMO_HELPER_ID = 'jl';
+
+export const SPECIALTIES = [
+  'Mecánica',
+  'Eléctrica',
+  'Cerrajería',
+  'Frenos',
+  'Suspensión',
+  'Hojalatería',
+  'Escapes',
+  'Aire acondicionado',
+];
+
+export const seedShops: Shop[] = [
+  {
+    id: 's1',
+    name: 'Tecnocar-Pro',
+    owner: 'César',
+    phone: '55 1000 0001',
+    zone: 'Iztapalapa',
+    address: 'Av. Ermita Iztapalapa 120',
+    specialties: ['Mecánica', 'Eléctrica', 'Cerrajería'],
+    status: 'activo',
+    verified: true,
+    hours: 'L–S 9:00 a 19:00',
+    mapX: 0.5,
+    mapY: 0.38,
+    distanceKm: 0.8,
+  },
+  {
+    id: 's2',
+    name: 'Frenos y Clutch Ramírez',
+    owner: 'Hugo Ramírez',
+    phone: '55 1000 0002',
+    zone: 'Tláhuac',
+    address: 'Av. Tláhuac 2210',
+    specialties: ['Frenos', 'Suspensión'],
+    status: 'activo',
+    verified: true,
+    hours: 'L–S 9:00 a 18:00',
+    mapX: 0.16,
+    mapY: 0.3,
+    distanceKm: 2.1,
+  },
+  {
+    id: 's3',
+    name: 'Eléctrico Automotriz Aztlán',
+    owner: 'Marco Aztlán',
+    phone: '55 1000 0003',
+    zone: 'Coyoacán',
+    address: 'Calz. del Hueso 540',
+    specialties: ['Eléctrica', 'Aire acondicionado'],
+    status: 'activo',
+    verified: false,
+    hours: 'L–S 9:00 a 20:00',
+    mapX: 0.78,
+    mapY: 0.18,
+    distanceKm: 2.6,
+  },
+  {
+    id: 's4',
+    name: 'Mofles Solís',
+    owner: 'Raúl Solís',
+    phone: '55 1000 0004',
+    zone: 'Iztacalco',
+    address: 'Av. Té 88',
+    specialties: ['Escapes'],
+    status: 'pausado',
+    verified: false,
+    hours: 'L–V 9:00 a 17:00',
+    mapX: 0.82,
+    mapY: 0.62,
+    distanceKm: 3.1,
+  },
+  {
+    id: 's5',
+    name: 'Taller Gómez',
+    owner: 'Ricardo Gómez',
+    phone: '55 4821 0093',
+    zone: 'Xochimilco',
+    address: 'Av. Guadalupe I. Ramírez 412',
+    specialties: ['Mecánica'],
+    status: 'invitado',
+    verified: false,
+    hours: 'L–S 9:00 a 19:00',
+    mapX: 0.24,
+    mapY: 0.7,
+    distanceKm: 3.4,
+  },
+];
+
+export const seedHelpers: Helper[] = [
+  { id: 'jl', name: 'José Luis Ortega', phone: '55 6610 2231', pay: { type: 'fijo', amount: 450 }, paid: false },
+  { id: 'ma', name: 'Miguel Ángel Reyes', phone: '55 9042 1187', pay: { type: 'porcentaje', pct: 30 }, paid: false },
+  { id: 'ed', name: 'Eduardo Díaz', phone: '55 2287 4410', pay: { type: 'fijo', amount: 400 }, paid: false },
+];
+
+const inspection = (damaged: string[] = [], na: string[] = []): Record<string, InspState> =>
+  Object.fromEntries(INSPECTION_POINTS.map((p) => [p, (damaged.includes(p) ? 1 : na.includes(p) ? 2 : 0) as InspState]));
+
+const log = (state: CarState, who: string, m: number, note?: string): LogEntry => ({
+  state,
+  who,
+  at: minsAgo(m),
+  note,
+  photos: [],
+  visibleToClient: true,
+});
+
+const item = (
+  id: string,
+  kind: CostItem['kind'],
+  desc: string,
+  cost: number,
+  price: number,
+  supplier?: string,
+): CostItem => ({ id, kind, desc, cost, price, supplier });
+
+type CarSeed = Partial<Car> &
+  Pick<Car, 'folio' | 'brand' | 'model' | 'year' | 'color' | 'plates' | 'state' | 'client' | 'description'>;
+
+const mk = (c: CarSeed): Car => ({
+  id: 'c' + c.folio,
+  token: 'tk' + c.folio + 'x7',
+  enteredAt: minsAgo(180),
+  vin: '',
+  km: '',
+  helperId: undefined,
+  inspection: inspection(),
+  fuel: 3,
+  damages: [],
+  photos: [],
+  signed: true,
+  costs: [],
+  ivaOn: true,
+  log: [],
+  linked: false,
+  ...c,
+});
+
+export const seedCars: Car[] = [
+  mk({
+    folio: '0148',
+    brand: 'Honda',
+    model: 'CR-V',
+    year: '2015',
+    color: 'Gris',
+    plates: 'RDA-274-E',
+    km: '148,300',
+    state: 0,
+    client: { name: 'Sergio Lara', phone: '55 7712 3390', address: 'Calle Cedro 18, Iztapalapa' },
+    description: 'Ruido en suspensión delantera al pasar topes. Revisar bujes y amortiguadores.',
+    enteredAt: minsAgo(10),
+    inspection: inspection(['Espejos']),
+    log: [log(0, 'César', 10)],
+  }),
+  mk({
+    folio: '0147',
+    brand: 'Nissan',
+    model: 'Versa',
+    year: '2019',
+    color: 'Blanco',
+    plates: 'NXR-482-A',
+    km: '86,120',
+    state: 2,
+    helperId: 'jl',
+    client: { name: DEMO_CLIENT.name, phone: DEMO_CLIENT.phone, address: 'Av. Reforma 45, Iztapalapa' },
+    description:
+      'Falla al encender en frío, testigo de check engine. Escanear con OBDII, revisar bujías y bobinas.',
+    enteredAt: minsAgo(240),
+    linked: true,
+    costs: [
+      item('a1', 'refaccion', 'Juego de bujías NGK ×4', 480, 720, 'Refaccionaria El Güero'),
+      item('a2', 'refaccion', 'Bobina de encendido', 650, 950, 'AutoZone'),
+      item('a3', 'mano', 'Cambio de bujías y bobina', 0, 1200),
+      item('a4', 'mano', 'Escaneo OBDII', 0, 330),
+      item('a5', 'gasto', 'Consumibles y limpieza', 380, 0),
+    ],
+    log: [
+      log(2, 'José Luis', 95, 'Ya revisé con el escáner: falla en bobina del cilindro 2. Pedimos la refacción hoy.'),
+      log(1, 'José Luis', 200),
+      log(0, 'César', 240),
+    ],
+  }),
+  mk({
+    folio: '0146',
+    brand: 'VW',
+    model: 'Jetta',
+    year: '2016',
+    color: 'Negro',
+    plates: 'MZT-110-C',
+    state: 2,
+    helperId: 'ma',
+    client: { name: 'Pedro Ruiz', phone: '55 4400 1209', address: 'Calle 5 de Mayo 9, Tláhuac' },
+    description: 'Cambio de bomba de agua y revisión de termostato.',
+    enteredAt: minsAgo(1500),
+    costs: [item('b1', 'mano', 'Cambio de bomba de agua', 0, 1800)],
+    log: [log(2, 'Miguel Ángel', 600), log(1, 'Miguel Ángel', 1300), log(0, 'César', 1500)],
+  }),
+  mk({
+    folio: '0145',
+    brand: 'Chevrolet',
+    model: 'Aveo',
+    year: '2020',
+    color: 'Rojo',
+    plates: 'PLK-903-B',
+    state: 3,
+    helperId: 'jl',
+    client: { name: 'Ana Torres', phone: '55 8123 4410', address: 'Calle Sur 12, Iztacalco' },
+    description: 'Cambio de balatas delanteras y rectificado de discos.',
+    enteredAt: minsAgo(200),
+    costs: [
+      item('c1', 'refaccion', 'Balatas delanteras', 380, 560, 'Frenos Ramírez'),
+      item('c2', 'mano', 'Cambio de balatas y rectificado', 0, 900),
+    ],
+    log: [log(3, 'José Luis', 180), log(1, 'José Luis', 195), log(0, 'César', 200)],
+  }),
+  mk({
+    folio: '0144',
+    brand: 'Toyota',
+    model: 'Hilux',
+    year: '2018',
+    color: 'Plata',
+    plates: 'KTR-551-D',
+    state: 4,
+    helperId: 'ma',
+    client: { name: 'Transportes Gil', phone: '55 3320 9981', address: 'Av. 5 s/n, Iztapalapa' },
+    description: 'Afinación mayor y cambio de banda.',
+    enteredAt: minsAgo(2800),
+    costs: [
+      item('d1', 'refaccion', 'Kit de afinación', 700, 1100, 'AutoZone'),
+      item('d2', 'mano', 'Afinación mayor', 0, 1400),
+    ],
+    log: [log(4, 'César', 30), log(3, 'Miguel Ángel', 600), log(0, 'César', 2800)],
+  }),
+  mk({
+    folio: '0143',
+    brand: 'Mazda',
+    model: '3',
+    year: '2021',
+    color: 'Azul',
+    plates: 'HJG-018-A',
+    state: 3,
+    helperId: 'jl',
+    client: { name: 'Diana Cruz', phone: '55 5001 7722', address: 'Calle Roble 3, Coyoacán' },
+    description: 'Cerradura de puerta trasera derecha no abre. Duplicado de llave.',
+    enteredAt: minsAgo(1700),
+    costs: [item('e1', 'mano', 'Cambio de cerradura y duplicado de llave', 0, 850)],
+    log: [log(3, 'José Luis', 900), log(0, 'César', 1700)],
+  }),
+  mk({
+    folio: '0142',
+    brand: 'Toyota',
+    model: 'Yaris',
+    year: '2018',
+    color: 'Gris',
+    plates: 'LBM-327-A',
+    state: 4,
+    helperId: 'ed',
+    client: { name: DEMO_CLIENT.name, phone: DEMO_CLIENT.phone, address: 'Av. Reforma 45, Iztapalapa' },
+    description: 'Cambio de aceite y filtros, revisión de frenos.',
+    enteredAt: minsAgo(3000),
+    linked: true,
+    costs: [
+      item('f1', 'refaccion', 'Aceite sintético 4 L y filtro', 520, 780, 'Refaccionaria El Güero'),
+      item('f2', 'mano', 'Servicio mayor', 0, 1200),
+    ],
+    log: [
+      log(4, 'César', 45, 'Quedó listo. Se cambió aceite, filtros y se ajustaron los frenos.'),
+      log(3, 'Eduardo', 400),
+      log(0, 'César', 3000),
+    ],
+  }),
+];
