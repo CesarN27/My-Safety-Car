@@ -22,7 +22,7 @@ export default function Escanear() {
       setScanned(false);
       return;
     }
-    router.replace('/(cliente)');
+    router.replace('/cliente');
   };
 
   const onScan = ({ data }: { data: string }) => {

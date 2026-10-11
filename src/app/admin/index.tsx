@@ -3,7 +3,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
-import { MiniMap } from '@/components/mini-map';
+import { OsmMap } from '@/components/osm-map';
 import { AppHeader, Chip, Disp, Row, Screen, Tag, Txt } from '@/components/ui';
 import { initials } from '@/lib/format';
 import { useStore } from '@/store/app';
@@ -48,7 +48,7 @@ export default function AdminTalleres() {
           <Stat n="1,120" label="Clientes" />
         </Row>
         <View style={{ borderRadius: 14, overflow: 'hidden', borderWidth: 1.5, borderColor: C.border }}>
-          <MiniMap shops={shown} selectedId={selected} onSelect={setSelected} legend />
+          <OsmMap shops={shown} selectedId={selected} onSelect={setSelected} height={280} legend />
         </View>
         <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
           {FILTERS.map((f) => (

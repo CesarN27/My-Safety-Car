@@ -1,18 +1,18 @@
-import { router } from 'expo-router';
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 
 import { Screen } from '@/components/ui';
 import { useStore } from '@/store/app';
 
-/** Pestaña "Salir": cierra la sesión y regresa al inicio. */
+/**
+ * Pestaña "Salir": solo cierra la sesión. El regreso al inicio lo hace el
+ * `<Redirect>` del layout del rol (role !== X → "/"); navegar aquí también
+ * provocaba redirecciones cruzadas con Inicio (bucle de renders).
+ */
 export default function SignOut() {
   const { signOut } = useStore();
-  const done = useRef(false);
   useEffect(() => {
-    if (done.current) return;
-    done.current = true;
     signOut();
-    router.replace('/');
-  }, [signOut]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- solo al montar; signOut cambia de identidad con cada estado
+  }, []);
   return <Screen>{null}</Screen>;
 }

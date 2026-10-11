@@ -1,6 +1,8 @@
 import { useLocalSearchParams } from 'expo-router';
 import { View } from 'react-native';
 
+import { OsmMap } from '@/components/osm-map';
+import { fixed } from '@/lib/geo';
 import { AppHeader, Body, Btn, Card, Disp, Eyebrow, Row, Screen, Tag, Txt } from '@/components/ui';
 import { useStore } from '@/store/app';
 import { C } from '@/theme';
@@ -37,10 +39,14 @@ export default function AdminTaller() {
           <Eyebrow>Datos</Eyebrow>
           <Line k="Teléfono" v={shop.phone} />
           <Line k="Dirección" v={shop.address} />
+          <Line k="Coordenadas" v={`${fixed(shop.lat)}, ${fixed(shop.lng)}`} />
           <Line k="Horario" v={shop.hours} />
           <Line k="Especialidades" v={shop.specialties.join(', ') || 'Sin definir'} />
           <Line k="Verificado" v={shop.verified ? 'Sí, lo visitamos' : 'Todavía no'} />
         </Card>
+        <View style={{ borderRadius: 12, overflow: 'hidden', borderWidth: 1.5, borderColor: C.border }}>
+          <OsmMap shops={[shop]} selectedId={shop.id} height={220} />
+        </View>
         <View style={{ height: 4 }} />
         <Disp size={14} color={C.muted}>
           La ganancia y los costos del taller no se muestran aquí

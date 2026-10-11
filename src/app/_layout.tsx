@@ -38,10 +38,10 @@ export default function RootLayout() {
         <StatusBar style="light" />
         <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.bg } }}>
           <Stack.Screen name="index" />
-          <Stack.Screen name="(admin)" />
-          <Stack.Screen name="(taller)" />
-          <Stack.Screen name="(ayudante)" />
-          <Stack.Screen name="(cliente)" />
+          <Stack.Screen name="admin" />
+          <Stack.Screen name="taller" />
+          <Stack.Screen name="ayudante" />
+          <Stack.Screen name="cliente" />
           <Stack.Screen name="nuevo-expediente" options={{ presentation: 'modal' }} />
           <Stack.Screen name="alta-taller" options={{ presentation: 'modal' }} />
         </Stack>

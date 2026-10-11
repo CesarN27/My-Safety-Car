@@ -1,10 +1,11 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Alert, View } from 'react-native';
 
-import { MiniMap } from '@/components/mini-map';
+import { OsmMap } from '@/components/osm-map';
 import { AppHeader, Body, Btn, Chip, Field, FooterBar, Screen, SectionTag, Txt } from '@/components/ui';
 import { SPECIALTIES } from '@/data/seed';
+import { fixed, parseCoord, splitPair, type LatLng } from '@/lib/geo';
 import { useStore } from '@/store/app';
 import { C } from '@/theme';
 
@@ -16,14 +17,33 @@ export default function AltaTaller() {
   const [rfc, setRfc] = useState('');
   const [address, setAddress] = useState('');
   const [zone, setZone] = useState('');
+  const [lat, setLat] = useState('');
+  const [lng, setLng] = useState('');
   const [hours, setHours] = useState('L–S 9:00 a 19:00');
   const [specs, setSpecs] = useState<string[]>([]);
   const [channel, setChannel] = useState<'WhatsApp' | 'Correo'>('WhatsApp');
 
   const toggle = (s: string) => setSpecs((x) => (x.includes(s) ? x.filter((y) => y !== s) : [...x, s]));
-  const ready = name.trim() && owner.trim() && phone.trim() && address.trim();
+  const latN = parseCoord(lat, 'lat');
+  const lngN = parseCoord(lng, 'lng');
+  const pin: LatLng | null = latN !== null && lngN !== null ? { lat: latN, lng: lngN } : null;
+  const ready = name.trim() && owner.trim() && phone.trim() && address.trim() && pin;
+
+  // Si pegan "19.35, -99.08" en cualquiera de los dos campos, se reparte solo.
+  const typeCoord = (set: (v: string) => void) => (v: string) => {
+    const pair = splitPair(v);
+    if (pair) {
+      setLat(String(pair.lat));
+      setLng(String(pair.lng));
+    } else set(v.replace(/\s/g, ''));
+  };
+  const pick = useCallback((p: LatLng) => {
+    setLat(fixed(p.lat));
+    setLng(fixed(p.lng));
+  }, []);
 
   const save = () => {
+    if (!pin) return;
     addShop({
       name: name.trim(),
       owner: owner.trim(),
@@ -32,6 +52,8 @@ export default function AltaTaller() {
       zone: zone.trim() || address.trim().split(',').pop()!.trim(),
       specialties: specs,
       hours,
+      lat: pin.lat,
+      lng: pin.lng,
     });
     Alert.alert('Taller guardado', `Le mandamos la invitación a ${owner.trim()} por ${channel}. Queda como Invitado hasta que lo actives.`);
     router.back();
@@ -52,11 +74,37 @@ export default function AltaTaller() {
         <SectionTag>Ubicación</SectionTag>
         <Field label="Dirección" value={address} onChangeText={setAddress} placeholder="Calle, número, colonia, alcaldía" />
         <Field label="Zona (como se verá en la lista)" value={zone} onChangeText={setZone} placeholder="Xochimilco" />
-        <View style={{ borderRadius: 12, overflow: 'hidden', borderWidth: 1.5, borderColor: C.border }}>
-          <MiniMap shops={shops} height={150} />
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <Field
+            style={{ flex: 1 }}
+            label="Latitud"
+            value={lat}
+            onChangeText={typeCoord(setLat)}
+            placeholder="19.358900"
+            keyboardType="numbers-and-punctuation"
+            autoCorrect={false}
+          />
+          <Field
+            style={{ flex: 1 }}
+            label="Longitud"
+            value={lng}
+            onChangeText={typeCoord(setLng)}
+            placeholder="-99.084600"
+            keyboardType="numbers-and-punctuation"
+            autoCorrect={false}
+          />
         </View>
-        <Txt style={{ fontSize: 12, color: C.muted }}>
-          El pin se ajusta con el mapa real en la fase 3; por ahora se coloca según la dirección.
+        {(lat && latN === null) || (lng && lngN === null) ? (
+          <Txt style={{ fontSize: 12, color: '#B91C1C' }}>
+            Usa números con punto decimal: latitud entre -90 y 90, longitud entre -180 y 180.
+          </Txt>
+        ) : null}
+        <View style={{ borderRadius: 12, overflow: 'hidden', borderWidth: 1.5, borderColor: C.border }}>
+          <OsmMap shops={shops} height={220} pin={pin} onPick={pick} />
+        </View>
+        <Txt style={{ fontSize: 12, color: C.muted, lineHeight: 17 }}>
+          Escribe las coordenadas (o pega «lat, lng» tal como las copias de Google Maps u OpenStreetMap) o toca el mapa para colocar
+          el pin. Es obligatorio: sin coordenadas el taller no puede salir en el mapa del cliente.
         </Txt>
 
         <SectionTag>Especialidades</SectionTag>

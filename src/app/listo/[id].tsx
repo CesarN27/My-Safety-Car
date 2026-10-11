@@ -7,6 +7,7 @@ import { Pressable, View } from 'react-native';
 import { Slash } from '@/components/brand';
 import { AppHeader, Body, Btn, Card, Disp, Eyebrow, FooterBar, Row, Screen, Txt } from '@/components/ui';
 import { carTotals, money } from '@/lib/money';
+import { DEMO_SHOP_ID } from '@/data/seed';
 import { useStore } from '@/store/app';
 import { C } from '@/theme';
 
@@ -16,7 +17,7 @@ export default function Listo() {
   const { carById, helpers, shops } = useStore();
   const [sent, setSent] = useState(false);
   const car = carById(id);
-  const shop = shops[0];
+  const shop = shops.find((s) => s.id === DEMO_SHOP_ID) ?? shops[0];
   if (!car) return <Screen><AppHeader title="Tu coche" onBack /></Screen>;
 
   const { total } = carTotals(car, helpers);
@@ -48,7 +49,7 @@ export default function Listo() {
           <Txt style={{ color: '#3F3B36' }}>{shop.hours}</Txt>
           <Row style={{ gap: 8 }}>
             <Pressable
-              onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(shop.name + ' ' + shop.address)}`)}
+              onPress={() => Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${shop.lat},${shop.lng}`)}
               accessibilityRole="button"
               style={{ flex: 1, minHeight: 46, flexDirection: 'row', gap: 8, alignItems: 'center', justifyContent: 'center', borderRadius: 10, borderWidth: 1.5, borderColor: C.ink }}
             >

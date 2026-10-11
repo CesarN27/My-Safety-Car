@@ -73,7 +73,7 @@ const initial: State = { role: null, shops: seedShops, helpers: seedHelpers, car
 export interface Store extends State {
   signIn: (role: Role) => void;
   signOut: () => void;
-  addShop: (shop: Omit<Shop, 'id' | 'mapX' | 'mapY' | 'distanceKm' | 'verified' | 'status'>) => void;
+  addShop: (shop: Omit<Shop, 'id' | 'verified' | 'status'>) => void;
   setShopStatus: (id: string, status: ShopStatus) => void;
   addHelper: (h: { name: string; phone: string; pay: PayRule; photo?: string }) => void;
   payHelper: (id: string) => void;
@@ -112,9 +112,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
             id: 's' + Date.now(),
             status: 'invitado',
             verified: false,
-            mapX: 0.15 + Math.random() * 0.7,
-            mapY: 0.15 + Math.random() * 0.6,
-            distanceKm: Math.round((1 + Math.random() * 5) * 10) / 10,
           },
         }),
       setShopStatus: (id, status) => dispatch({ type: 'shopStatus', id, status }),

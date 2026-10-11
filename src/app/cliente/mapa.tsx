@@ -4,20 +4,28 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
-import { MiniMap } from '@/components/mini-map';
-import { Chip, Disp, PhaseBadge, Row, Tag, Txt } from '@/components/ui';
+import { OsmMap } from '@/components/osm-map';
+import { Chip, Disp, Row, Tag, Txt } from '@/components/ui';
 import { SPECIALTIES } from '@/data/seed';
 import { digits, initials } from '@/lib/format';
+import { distanceKm, formatKm } from '@/lib/geo';
+import { useUserLocation } from '@/lib/use-location';
 import { useStore } from '@/store/app';
 import { C } from '@/theme';
 
-/** Fase 3: el mapa real con búsqueda por distancia. Aquí va con un mapa de ejemplo y solo talleres activos. */
+/** Mapa real (OpenStreetMap) con los talleres activos; las distancias salen de la ubicación del cliente. */
 export default function MapaTalleres() {
   const { shops } = useStore();
   const insets = useSafeAreaInsets();
   const [spec, setSpec] = useState<string>();
+  const me = useUserLocation();
 
-  const visible = shops.filter((s) => s.status === 'activo').filter((s) => !spec || s.specialties.includes(spec));
+  const visible = shops
+    .filter((s) => s.status === 'activo')
+    .filter((s) => !spec || s.specialties.includes(spec))
+    .map((s) => ({ shop: s, km: me ? distanceKm(me, s) : null }))
+    .sort((a, b) => (a.km ?? 0) - (b.km ?? 0))
+    .map((x) => x.shop);
   const [sel, setSel] = useState<string>();
   const cur = visible.find((s) => s.id === sel) ?? visible[0];
 
@@ -28,7 +36,6 @@ export default function MapaTalleres() {
           <Disp size={26} color="#fff">
             Talleres cerca
           </Disp>
-          <PhaseBadge phase={3} />
         </Row>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
           {SPECIALTIES.slice(0, 6).map((s) => (
@@ -38,7 +45,7 @@ export default function MapaTalleres() {
       </View>
       <View style={{ height: 5, backgroundColor: C.orange }} />
 
-      <MiniMap shops={visible} selectedId={cur?.id} onSelect={setSel} showYou />
+      <OsmMap shops={visible} selectedId={cur?.id} onSelect={setSel} user={me} />
 
       {cur ? (
         <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16, gap: 10, elevation: 8 }}>
@@ -56,7 +63,8 @@ export default function MapaTalleres() {
                 {cur.verified ? <Ionicons name="checkmark-circle" size={18} color={C.orange} accessibilityLabel="Taller verificado" /> : null}
               </Row>
               <Txt style={{ fontSize: 13, color: C.muted }}>
-                a {cur.distanceKm} km · {cur.hours}
+                {me ? `a ${formatKm(distanceKm(me, cur))} · ` : ''}
+                {cur.hours}
               </Txt>
             </View>
           </Row>
@@ -68,7 +76,7 @@ export default function MapaTalleres() {
           <Row style={{ gap: 8 }}>
             <Act label="Llamar" onPress={() => Linking.openURL(`tel:${digits(cur.phone)}`)} />
             <Act label="WhatsApp" onPress={() => Linking.openURL(`https://wa.me/52${digits(cur.phone).slice(-10)}`)} />
-            <Act primary label="Cómo llegar" onPress={() => Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(cur.name + ' ' + cur.address)}`)} />
+            <Act primary label="Cómo llegar" onPress={() => Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${cur.lat},${cur.lng}`)} />
           </Row>
         </View>
       ) : (

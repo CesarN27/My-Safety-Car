@@ -48,10 +48,9 @@ export interface Shop {
   status: ShopStatus;
   verified: boolean;
   hours: string;
-  /** Posición en el mapa de ejemplo, 0 a 1 */
-  mapX: number;
-  mapY: number;
-  distanceKm: number;
+  /** Ubicación del taller en grados decimales (WGS84), la captura el admin en el alta. */
+  lat: number;
+  lng: number;
 }
 
 export type PayRule = { type: 'fijo'; amount: number } | { type: 'porcentaje'; pct: number };

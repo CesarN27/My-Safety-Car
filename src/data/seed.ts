@@ -4,6 +4,8 @@ import type { Car, CarState, CostItem, Helper, InspState, LogEntry, Shop } from 
 const minsAgo = (m: number) => new Date(Date.now() - m * 60000).toISOString();
 
 export const SHOP_NAME = 'Tecnocar-Pro';
+/** El taller de los coches de ejemplo (los talleres nuevos se agregan al inicio de la lista). */
+export const DEMO_SHOP_ID = 's1';
 export const OWNER_NAME = 'César';
 export const DEMO_CLIENT = { name: 'Laura Méndez', phone: '55 3021 7788' };
 export const DEMO_HELPER_ID = 'jl';
@@ -19,6 +21,7 @@ export const SPECIALTIES = [
   'Aire acondicionado',
 ];
 
+// Coordenadas aproximadas de ejemplo (CDMX); los talleres reales las captura el admin en el alta.
 export const seedShops: Shop[] = [
   {
     id: 's1',
@@ -31,9 +34,8 @@ export const seedShops: Shop[] = [
     status: 'activo',
     verified: true,
     hours: 'L–S 9:00 a 19:00',
-    mapX: 0.5,
-    mapY: 0.38,
-    distanceKm: 0.8,
+    lat: 19.3589,
+    lng: -99.0846,
   },
   {
     id: 's2',
@@ -46,9 +48,8 @@ export const seedShops: Shop[] = [
     status: 'activo',
     verified: true,
     hours: 'L–S 9:00 a 18:00',
-    mapX: 0.16,
-    mapY: 0.3,
-    distanceKm: 2.1,
+    lat: 19.3205,
+    lng: -99.063,
   },
   {
     id: 's3',
@@ -61,9 +62,8 @@ export const seedShops: Shop[] = [
     status: 'activo',
     verified: false,
     hours: 'L–S 9:00 a 20:00',
-    mapX: 0.78,
-    mapY: 0.18,
-    distanceKm: 2.6,
+    lat: 19.3045,
+    lng: -99.1355,
   },
   {
     id: 's4',
@@ -76,9 +76,8 @@ export const seedShops: Shop[] = [
     status: 'pausado',
     verified: false,
     hours: 'L–V 9:00 a 17:00',
-    mapX: 0.82,
-    mapY: 0.62,
-    distanceKm: 3.1,
+    lat: 19.3925,
+    lng: -99.109,
   },
   {
     id: 's5',
@@ -91,9 +90,8 @@ export const seedShops: Shop[] = [
     status: 'invitado',
     verified: false,
     hours: 'L–S 9:00 a 19:00',
-    mapX: 0.24,
-    mapY: 0.7,
-    distanceKm: 3.4,
+    lat: 19.2625,
+    lng: -99.104,
   },
 ];
 
