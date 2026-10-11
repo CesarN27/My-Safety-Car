@@ -1,6 +1,7 @@
 import {
   Column,
   CreateDateColumn,
+  Check,
   Entity,
   Index,
   JoinColumn,
@@ -14,6 +15,8 @@ import { Car } from './car.entity.js';
 
 /** Bitácora de avance: cada cambio de estado con nota y fotos. */
 @Entity('car_logs')
+@Index(['carId', 'at'])
+@Check('"state" BETWEEN 0 AND 5')
 export class CarLog {
   @PrimaryGeneratedColumn('uuid') id: string;
   @Index() @Column('uuid') carId: string;

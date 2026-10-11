@@ -1,6 +1,7 @@
 import {
   Column,
   CreateDateColumn,
+  Check,
   Entity,
   Index,
   JoinColumn,
@@ -13,6 +14,9 @@ import { Shop } from '../shops/shop.entity.js';
 
 /** Cuenta de acceso. El teléfono es la identidad (login por código). */
 @Entity('users')
+@Check(
+  '("role" IN (\'taller\', \'ayudante\') AND "shopId" IS NOT NULL) OR ("role" IN (\'admin\', \'cliente\') AND "shopId" IS NULL)',
+)
 export class User {
   @PrimaryGeneratedColumn('uuid') id: string;
   @Index({ unique: true }) @Column() phone: string;

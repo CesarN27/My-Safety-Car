@@ -1,5 +1,6 @@
 import {
   Column,
+  Check,
   Entity,
   Index,
   JoinColumn,
@@ -13,6 +14,8 @@ import { Car } from './car.entity.js';
 
 /** Concepto de costo. Solo lo ven taller y admin; el cliente recibe únicamente el total. */
 @Entity('cost_items')
+@Check('"cost" >= 0')
+@Check('"price" >= 0')
 export class CostItem {
   @PrimaryGeneratedColumn('uuid') id: string;
   @Index() @Column('uuid') carId: string;

@@ -7,7 +7,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Tecnocar-Pro: app para talleres mecánicos con cuatro roles (admin master, taller, ayudante, cliente). El repo está dividido en dos carpetas:
 
 - `frontend/` — app Expo (SDK 57, Expo Router, TypeScript, React Compiler). Funciona hoy.
-- `backend/` — API NestJS 12 (ESM, `"type": "module"`, imports con `.js`) + TypeORM + PostgreSQL 17 en Docker. Hecho: esqueleto, esquema y migración inicial (`shops`, `users`, `helpers`, `cars`, `cost_items`, `car_logs`, `car_photos`). Falta, en orden: auth simulado y roles → endpoints de talleres/expedientes/costos/bitácora (respuesta distinta por rol) → fotos y firma (disco local detrás de una interfaz `Storage`) → conectar el frontend → login real por teléfono (canal sin definir; se simulará detrás de una interfaz).
+- `backend/` — API NestJS 12 (ESM, `"type": "module"`, imports con `.js`) + TypeORM + PostgreSQL 17 en Docker. Hecho: esqueleto, esquema (`shops`, `users`, `helpers`, `cars`, `cost_items`, `car_logs`, `car_photos`) con restricciones `CHECK` e índices (2 migraciones), arranque endurecido (`helmet`, `ValidationPipe` con whitelist, `.env` obligatorio y validado, Postgres solo en `127.0.0.1`). Falta, en orden: auth simulado y roles → endpoints de talleres/expedientes/costos/bitácora (respuesta distinta por rol) → fotos y firma (disco local detrás de una interfaz `Storage`) → conectar el frontend → login real por teléfono (canal sin definir; se simulará detrás de una interfaz).
+
+Las preguntas abiertas viven en `docs/decisiones-pendientes.md`: si una decisión queda sin resolver, usa un valor por defecto razonable y anótala ahí. Los temas de seguridad se atienden con la skill `claude-security:claude-security`.
 
 La documentación y los textos de UI están en español; mantenlo así.
 

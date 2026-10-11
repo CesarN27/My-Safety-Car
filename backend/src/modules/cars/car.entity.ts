@@ -1,6 +1,7 @@
 import {
   Column,
   CreateDateColumn,
+  Check,
   Entity,
   Index,
   JoinColumn,
@@ -8,6 +9,7 @@ import {
   OneToMany,
   PrimaryGeneratedColumn,
   type Relation,
+  UpdateDateColumn,
 } from 'typeorm';
 import type { CarState, InspState } from '../../common/enums.js';
 import { Helper } from '../helpers/helper.entity.js';
@@ -25,16 +27,24 @@ export interface Damage {
 
 /** Expediente de un coche en un taller. */
 @Entity('cars')
+@Index(['shopId', 'folio'], { unique: true })
+@Index(['shopId', 'state'])
+@Check('"state" BETWEEN 0 AND 5')
+@Check('"fuel" BETWEEN 0 AND 1')
 export class Car {
   @PrimaryGeneratedColumn('uuid') id: string;
   @Index() @Column('uuid') shopId: string;
   @ManyToOne(() => Shop, { onDelete: 'RESTRICT' })
   @JoinColumn({ name: 'shopId' })
   shop?: Relation<Shop>;
-  @Index({ unique: true }) @Column() folio: string;
+  /** Consecutivo legible; único dentro de cada taller. */
+  @Column() folio: string;
   /** Token aleatorio del QR; se puede regenerar para revocar el anterior. */
   @Index({ unique: true }) @Column() qrToken: string;
   @CreateDateColumn() enteredAt: Date;
+  /** Cuándo se entregó el coche (estado 5); null mientras siga en el taller. */
+  @Column({ type: 'timestamptz', nullable: true }) deliveredAt: Date | null;
+  @UpdateDateColumn() updatedAt: Date;
 
   @Column() brand: string;
   @Column() model: string;

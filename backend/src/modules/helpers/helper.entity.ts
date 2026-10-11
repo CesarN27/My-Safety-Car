@@ -1,6 +1,7 @@
 import {
   Column,
   CreateDateColumn,
+  Check,
   Entity,
   Index,
   JoinColumn,
@@ -14,6 +15,9 @@ import { Shop } from '../shops/shop.entity.js';
 import { User } from '../users/user.entity.js';
 
 @Entity('helpers')
+@Check(
+  '("payType" = \'fijo\' AND "payAmount" IS NOT NULL AND "payAmount" >= 0) OR ("payType" = \'porcentaje\' AND "payPct" IS NOT NULL AND "payPct" BETWEEN 0 AND 100)',
+)
 export class Helper {
   @PrimaryGeneratedColumn('uuid') id: string;
   @Index() @Column('uuid') shopId: string;
