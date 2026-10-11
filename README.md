@@ -5,6 +5,7 @@ App móvil con Expo (SDK 57, Expo Router, TypeScript) que implementa las pantall
 ## Correrla
 
 ```bash
+cd frontend
 npm install
 npx expo start
 ```
@@ -27,7 +28,7 @@ Los cambios de estado, costos y asignaciones se reflejan entre roles dentro de l
 ## Estructura
 
 ```
-src/app/            rutas (Expo Router): (admin), (taller), (ayudante), (cliente) y pantallas de detalle
+frontend/src/app/    rutas (Expo Router): (admin), (taller), (ayudante), (cliente) y pantallas de detalle
 src/components/     UI de la marca, mapa de ejemplo, fotos, firma, línea de tiempo
 src/store/app.tsx   estado de la app (en memoria)
 src/data/seed.ts    datos de ejemplo

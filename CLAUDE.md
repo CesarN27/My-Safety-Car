@@ -1,0 +1,60 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Proyecto
+
+Tecnocar-Pro: app para talleres mecánicos con cuatro roles (admin master, taller, ayudante, cliente). El repo está dividido en dos carpetas:
+
+- `frontend/` — app Expo (SDK 57, Expo Router, TypeScript, React Compiler). Funciona hoy.
+- `backend/` — API NestJS 12 (ESM, `"type": "module"`, imports con `.js`) + TypeORM + PostgreSQL 17 en Docker. Hecho: esqueleto, esquema y migración inicial (`shops`, `users`, `helpers`, `cars`, `cost_items`, `car_logs`, `car_photos`). Falta, en orden: auth simulado y roles → endpoints de talleres/expedientes/costos/bitácora (respuesta distinta por rol) → fotos y firma (disco local detrás de una interfaz `Storage`) → conectar el frontend → login real por teléfono (canal sin definir; se simulará detrás de una interfaz).
+
+La documentación y los textos de UI están en español; mantenlo así.
+
+## Comandos (correr desde `frontend/`)
+
+```bash
+npm install
+npx expo start          # dev server (a/w/i desde una terminal interactiva; en CI=1 no recarga)
+npx expo lint
+npx tsc --noEmit        # typecheck
+npx expo install <pkg>  # SIEMPRE en lugar de npm install <pkg>: resuelve la versión del SDK
+npx expo install --fix  # corrige versiones incompatibles
+```
+
+No hay tests. Corre lint y typecheck antes de dar algo por terminado. `frontend/AGENTS.md` pide consultar los docs versionados de Expo (`https://docs.expo.dev/versions/v57.0.0/`) antes de tocar APIs de Expo/RN, porque cambian entre SDKs.
+
+Si `npm install` falla con ERESOLVE entre paquetes `expo-*`, casi seguro `package.json` quedó con versiones mezcladas de SDKs distintos (pasó una vez); restaura al commit y usa `expo install`.
+
+## Comandos del backend (correr desde `backend/`)
+
+```bash
+cp .env.example .env     # una vez
+npm run db:up            # Postgres (docker compose); db:down lo apaga
+npm run migration:run    # aplica migraciones (compila antes con nest build)
+npm run migration:generate -- src/database/migrations/<Nombre>   # tras cambiar entidades
+npm run start:dev        # API en :3000 (también corre migraciones al arrancar)
+npm run lint && npm test # oxlint y vitest; un solo test: npx vitest run <archivo>
+```
+
+Detalles no obvios del backend:
+- La CLI de TypeORM corre sobre `dist/` (compilado), no sobre `src/`: `tsx` no emite metadatos de decoradores. Por eso los scripts `migration:*` hacen `nest build` primero y el glob de migraciones es `*.js`.
+- En las entidades, toda propiedad de relación tipada como entidad va envuelta en `Relation<...>` (`import { type Relation }`); si no, los imports circulares en ESM fallan con "Cannot access 'X' before initialization".
+- `synchronize` está siempre apagado: el esquema cambia solo con migraciones. Los `numeric` de Postgres se convierten a `number` con `common/numeric.transformer.ts`.
+- La configuración de base de datos vive en `src/database/db-config.ts` y la comparten Nest y la CLI.
+
+## Arquitectura del frontend
+
+- **Rutas** en `frontend/src/app/` (Expo Router, `typedRoutes` activo). Un grupo por rol: `admin/`, `taller/`, `ayudante/`, `cliente/` (cada uno con su `_layout.tsx` de tabs), más pantallas de detalle compartidas en la raíz de `app/` (`expediente/[id]`, `costos/[id]`, `actualizar/[id]`, `listo/[id]`, `qr/[id]`, `q/[token]`, …). Alias `@/` → `frontend/src/`.
+- **Estado**: todo en un único `useReducer` en `src/store/app.tsx` (`AppProvider`/`useStore`), en memoria y sembrado desde `src/data/seed.ts`. Ahí vive `role` (el "login" actual es solo `signIn(role)`), y las acciones (`addCar`, `saveCosts`, `setProgress`, `linkCarByToken`, …). Este archivo es lo que el backend va a reemplazar con llamadas a la API.
+- **Modelo de dominio** en `src/types.ts`: `Car` (expediente) agrupa inspección de 15 puntos, golpes, costos, bitácora (`LogEntry`) y estado `CarState` 0–5.
+- **Dinero** en `src/lib/money.ts`: IVA 16 %, total, ganancia y pago de ayudante (fijo o porcentaje de la mano de obra) se derivan de los `CostItem`; nunca se guardan. Al hacer el backend este cálculo debe vivir en el servidor.
+- **Mapas**: OpenStreetMap vía WebView (`osm-map.tsx`, `osm-html.ts`) con variantes por plataforma (`map-surface.tsx` / `map-surface.web.tsx`).
+- **QR**: el link `tallerapp://q/<token>` abre `q/[token].tsx`, que entra como cliente y liga el coche con `linkCarByToken`.
+
+## Reglas de negocio que el backend debe imponer (hoy solo se ocultan en la UI)
+
+1. El **cliente** solo ve el total; el **ayudante** nunca ve costos ni ganancia. Plan: rutas y formas de respuesta distintas por rol (no el mismo endpoint ocultando campos) y pruebas que verifiquen que esos roles jamás reciben `cost`, `profit` ni gastos.
+2. Un taller no puede ver datos de otro (filtro de taller obligatorio en cada consulta).
+3. El token del QR debe ser aleatorio y revocable.
+4. El admin da de alta talleres y los activa/pausa (`ShopStatus`).
