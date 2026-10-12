@@ -10,11 +10,11 @@ import { useStore } from '@/store/app';
 import { C, F } from '@/theme';
 import type { Role } from '@/types';
 
-const ROLES: { role: Role; title: string; sub: string; icon: IconName; href: '/(admin)' | '/(taller)' | '/(ayudante)' | '/(cliente)' }[] = [
-  { role: 'admin', title: 'Admin master', sub: 'Alta de talleres y mapa', icon: 'star', href: '/(admin)' },
-  { role: 'taller', title: 'Taller (dueño)', sub: 'Expedientes, costos, ayudantes, QR', icon: 'construct', href: '/(taller)' },
-  { role: 'ayudante', title: 'Ayudante', sub: 'Mis coches asignados y mis pagos', icon: 'person', href: '/(ayudante)' },
-  { role: 'cliente', title: 'Cliente', sub: 'Escanear QR y ver mi coche', icon: 'car-sport', href: '/(cliente)' },
+const ROLES: { role: Role; title: string; sub: string; icon: IconName; href: '/admin' | '/taller' | '/ayudante' | '/cliente' }[] = [
+  { role: 'admin', title: 'Admin master', sub: 'Alta de talleres y mapa', icon: 'star', href: '/admin' },
+  { role: 'taller', title: 'Taller (dueño)', sub: 'Expedientes, costos, ayudantes, QR', icon: 'construct', href: '/taller' },
+  { role: 'ayudante', title: 'Ayudante', sub: 'Mis coches asignados y mis pagos', icon: 'person', href: '/ayudante' },
+  { role: 'cliente', title: 'Cliente', sub: 'Escanear QR y ver mi coche', icon: 'car-sport', href: '/cliente' },
 ];
 
 export default function Inicio() {

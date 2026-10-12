@@ -4,7 +4,7 @@ import type { ReactNode } from 'react';
 import { DEMO_HELPER_ID, OWNER_NAME, seedCars, seedHelpers, seedShops } from '@/data/seed';
 import { carTotals } from '@/lib/money';
 import { STATES } from '@/types';
-import type { Car, CarState, CostItem, Helper, PayRule, Role, Shop, ShopStatus } from '@/types';
+import type { Car, CarState, CostItem, Helper, PayRule, Role, Scan, Shop, ShopStatus } from '@/types';
 
 interface State {
   role: Role | null;
@@ -73,12 +73,16 @@ const initial: State = { role: null, shops: seedShops, helpers: seedHelpers, car
 export interface Store extends State {
   signIn: (role: Role) => void;
   signOut: () => void;
-  addShop: (shop: Omit<Shop, 'id' | 'mapX' | 'mapY' | 'distanceKm' | 'verified' | 'status'>) => void;
+  addShop: (shop: Omit<Shop, 'id' | 'verified' | 'status'>) => void;
   setShopStatus: (id: string, status: ShopStatus) => void;
   addHelper: (h: { name: string; phone: string; pay: PayRule; photo?: string }) => void;
   payHelper: (id: string) => void;
-  addCar: (c: Omit<Car, 'id' | 'folio' | 'token' | 'enteredAt' | 'state' | 'log' | 'costs' | 'ivaOn' | 'linked'>) => string;
+  addCar: (c: Omit<Car, 'id' | 'folio' | 'token' | 'enteredAt' | 'state' | 'log' | 'scans' | 'costs' | 'ivaOn' | 'linked'>) => string;
   setHelper: (carId: string, helperId?: string) => void;
+  /** Registra un escaneo de diagnóstico en el expediente. */
+  addScan: (carId: string, scan: Pick<Scan, 'codes' | 'note' | 'photo'> & { who?: string }) => void;
+  /** Agrega una foto extra a la inspección de ingreso. */
+  addPhoto: (carId: string, uri: string) => void;
   saveCosts: (carId: string, costs: CostItem[], ivaOn: boolean) => void;
   /** Cambia el estado y deja constancia. Devuelve un error legible si no se puede. */
   setProgress: (
@@ -112,9 +116,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
             id: 's' + Date.now(),
             status: 'invitado',
             verified: false,
-            mapX: 0.15 + Math.random() * 0.7,
-            mapY: 0.15 + Math.random() * 0.6,
-            distanceKm: Math.round((1 + Math.random() * 5) * 10) / 10,
           },
         }),
       setShopStatus: (id, status) => dispatch({ type: 'shopStatus', id, status }),
@@ -135,12 +136,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
             enteredAt: now,
             state: 0,
             costs: [],
+            scans: [],
             ivaOn: true,
             linked: false,
             log: [{ state: 0, who: OWNER_NAME, at: now, photos: [], visibleToClient: true }],
           },
         });
         return id;
+      },
+      addScan: (carId, scan) => {
+        const car = s.cars.find((c) => c.id === carId);
+        if (!car) return;
+        const entry: Scan = { id: 'sc' + Date.now(), at: new Date().toISOString(), who: scan.who ?? OWNER_NAME, codes: scan.codes, note: scan.note, photo: scan.photo };
+        dispatch({ type: 'patchCar', id: carId, patch: { scans: [entry, ...car.scans] } });
+      },
+      addPhoto: (carId, uri) => {
+        const car = s.cars.find((c) => c.id === carId);
+        if (car) dispatch({ type: 'patchCar', id: carId, patch: { photos: [...car.photos, uri] } });
       },
       setHelper: (carId, helperId) => dispatch({ type: 'patchCar', id: carId, patch: { helperId } }),
       saveCosts: (carId, costs, ivaOn) => dispatch({ type: 'patchCar', id: carId, patch: { costs, ivaOn } }),

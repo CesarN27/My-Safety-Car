@@ -17,5 +17,5 @@ export default function AbrirQr() {
   }, [token]);
 
   if (role !== 'cliente') return <Screen>{null}</Screen>;
-  return <Redirect href="/(cliente)" />;
+  return <Redirect href="/cliente" />;
 }

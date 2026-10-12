@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Timeline } from '@/components/timeline';
 import { Btn, Card, Chip, Disp, Eyebrow, ProgressBar, Row, Screen, Txt } from '@/components/ui';
 import { digits } from '@/lib/format';
+import { DEMO_SHOP_ID } from '@/data/seed';
 import { useStore } from '@/store/app';
 import { C } from '@/theme';
 import { STATES } from '@/types';
@@ -18,7 +19,7 @@ export default function MiCoche() {
   const mine = cars.filter((c) => c.linked);
   const [pick, setPick] = useState(mine[0]?.id);
   const car = mine.find((c) => c.id === pick) ?? mine[0];
-  const shop = shops[0];
+  const shop = shops.find((s) => s.id === DEMO_SHOP_ID) ?? shops[0];
 
   if (!car) {
     return (
@@ -30,7 +31,7 @@ export default function MiCoche() {
           <Txt style={{ color: '#C9C9C9', lineHeight: 22 }}>
             Cuando dejes tu coche en un taller, te dan un QR. Escanéalo para ver aquí en qué va, sin llamar.
           </Txt>
-          <Btn label="Escanear mi QR" icon="qr-code-outline" onPress={() => router.navigate('/(cliente)/escanear')} />
+          <Btn label="Escanear mi QR" icon="qr-code-outline" onPress={() => router.navigate('/cliente/escanear')} />
         </View>
       </Screen>
     );

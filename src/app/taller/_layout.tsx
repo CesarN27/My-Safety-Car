@@ -11,6 +11,7 @@ export default function TallerLayout() {
   return (
     <Tabs screenOptions={options}>
       <Tabs.Screen name="index" options={{ title: 'Coches', tabBarIcon: tabIcon('car-sport') }} />
+      <Tabs.Screen name="archivo" options={{ title: 'Archivo', tabBarIcon: tabIcon('folder-open') }} />
       <Tabs.Screen name="ayudantes" options={{ title: 'Ayudantes', tabBarIcon: tabIcon('people') }} />
       <Tabs.Screen name="reportes" options={{ title: 'Reportes', tabBarIcon: tabIcon('stats-chart') }} />
       <Tabs.Screen name="salir" options={{ title: 'Salir', tabBarIcon: tabIcon('log-out-outline') }} />

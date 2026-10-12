@@ -4,17 +4,20 @@ import { Link, router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
+import { pickPhoto } from '@/components/photo-slot';
 import { Timeline } from '@/components/timeline';
 import { AppHeader, Body, Btn, Card, Chip, Disp, Eyebrow, Row, Screen, Tag, Txt } from '@/components/ui';
+import { longDate, sheetPhotos } from '@/lib/hoja-html';
+import { when } from '@/lib/format';
 import { carTotals, money } from '@/lib/money';
 import { useStore } from '@/store/app';
 import { C } from '@/theme';
-import { STATES } from '@/types';
+import { INSPECTION_POINTS, STATES } from '@/types';
 import type { CarState } from '@/types';
 
 export default function Expediente() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { carById, helpers, helperById, setProgress, setHelper } = useStore();
+  const { carById, helpers, helperById, setProgress, setHelper, addPhoto } = useStore();
   const [error, setError] = useState<string | null>(null);
   const car = carById(id);
   if (!car) return <Screen><AppHeader title="Expediente" onBack /></Screen>;
@@ -23,14 +26,15 @@ export default function Expediente() {
   const helper = helperById(car.helperId);
   const next = car.state < 5 ? ((car.state + 1) as CarState) : null;
   const needsCosts = next === 4 && t.total <= 0;
-  const damaged = Object.entries(car.inspection).filter(([, s]) => s === 1).map(([k]) => k);
+  const damaged = INSPECTION_POINTS.filter((p) => car.inspection[p] === 1);
+  const okCount = INSPECTION_POINTS.filter((p) => car.inspection[p] === 0).length;
 
   return (
     <Screen>
       <AppHeader
         title={`${car.brand} ${car.model} ${car.year}`}
         eyebrow={`Folio ${car.folio}`}
-        subtitle={[car.color, car.plates, car.km && `${car.km} km`].filter(Boolean).join(' · ')}
+        subtitle={[car.color, car.plates, car.km && `Odómetro ${car.km} km`].filter(Boolean).join(' · ')}
         onBack
         right={
           <Link href={{ pathname: '/qr/[id]', params: { id: car.id } }} asChild>
@@ -142,21 +146,88 @@ export default function Expediente() {
         <Card>
           <Eyebrow>Servicio</Eyebrow>
           <Txt style={{ lineHeight: 21 }}>{car.description || 'Sin descripción.'}</Txt>
-          {damaged.length ? (
-            <Txt style={{ fontSize: 13, color: C.muted }}>Con daño al ingresar: {damaged.join(', ')}.</Txt>
-          ) : null}
+        </Card>
+
+        <Card>
+          <Eyebrow>Inspección de ingreso</Eyebrow>
+          <Txt style={{ fontSize: 13, color: C.muted }}>
+            {okCount} de {INSPECTION_POINTS.length} puntos bien
+            {damaged.length ? ` · ${damaged.length} con daño` : ''} · Gasolina {car.fuel + 1}/8
+          </Txt>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+            {INSPECTION_POINTS.map((p) => {
+              const st = car.inspection[p];
+              if (st === 0) return null;
+              return <Tag key={p} label={`${p}: ${st === 1 ? 'dañado' : 'N/A'}`} bg={st === 1 ? C.redBg : '#E5E7EB'} fg={st === 1 ? C.red : '#374151'} />;
+            })}
+          </View>
           {car.damages.length ? (
             <Txt style={{ fontSize: 13, color: C.muted }}>
               Golpes marcados: {car.damages.map((d) => `${d.id}${d.note ? ` ${d.note}` : ''}`).join(' · ')}
             </Txt>
           ) : null}
-          {car.photos.length ? (
-            <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-              {car.photos.map((u) => (
-                <Image key={u} source={{ uri: u }} style={{ width: 74, height: 56, borderRadius: 8 }} contentFit="cover" />
+          {sheetPhotos(car).length ? (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {sheetPhotos(car).map(({ uri: u, label }) => (
+                <View key={u} style={{ width: '48%', flexGrow: 1 }}>
+                  <Image source={{ uri: u }} style={{ width: '100%', aspectRatio: 4 / 3, borderRadius: 8 }} contentFit="cover" accessibilityLabel={label} />
+                  <Txt semi style={{ fontSize: 11, color: C.muted, textAlign: 'center', marginTop: 2 }}>
+                    {label}
+                  </Txt>
+                </View>
               ))}
             </View>
-          ) : null}
+          ) : (
+            <Txt style={{ color: C.muted }}>Todavía no hay fotos de ingreso.</Txt>
+          )}
+          <Btn
+            label="Agregar foto de inspección"
+            kind="outline"
+            icon="camera-outline"
+            onPress={async () => {
+              const u = await pickPhoto();
+              if (u) addPhoto(car.id, u);
+            }}
+          />
+        </Card>
+
+        <Card>
+          <Eyebrow>Escaneos</Eyebrow>
+          {car.scans.length ? (
+            car.scans.map((sc) => (
+              <View key={sc.id} style={{ gap: 6, paddingBottom: 10, borderBottomWidth: 1, borderColor: C.line }}>
+                <Row style={{ justifyContent: 'space-between' }}>
+                  <Txt semi style={{ fontSize: 13 }}>
+                    {when(sc.at)} · {sc.who}
+                  </Txt>
+                  <Tag label={sc.codes.length ? `${sc.codes.length} ${sc.codes.length === 1 ? 'falla' : 'fallas'}` : 'Sin fallas'} bg={sc.codes.length ? C.redBg : C.greenBg} fg={sc.codes.length ? C.red : C.green} />
+                </Row>
+                {sc.codes.length ? (
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                    {sc.codes.map((c) => (
+                      <Tag key={c} label={c} bg="#fff" fg={C.text} dashed />
+                    ))}
+                  </View>
+                ) : null}
+                {sc.note ? <Txt style={{ fontSize: 13, color: '#3F3B36', lineHeight: 19 }}>{sc.note}</Txt> : null}
+                {sc.photo ? <Image source={{ uri: sc.photo }} style={{ width: '100%', aspectRatio: 4 / 3, borderRadius: 8 }} contentFit="cover" accessibilityLabel="Pantalla del escáner" /> : null}
+              </View>
+            ))
+          ) : (
+            <Txt style={{ color: C.muted }}>Todavía no se ha registrado ningún escaneo.</Txt>
+          )}
+          <Btn label="Registrar escaneo" kind="outline" icon="scan-outline" onPress={() => router.push({ pathname: '/escaneo', params: { carId: car.id } })} />
+        </Card>
+
+        <Card>
+          <Eyebrow>Hoja de recepción</Eyebrow>
+          <Row style={{ justifyContent: 'space-between' }}>
+            <Txt style={{ flex: 1, fontSize: 13, color: C.muted, lineHeight: 19 }}>
+              {car.signed ? `Cláusula aceptada y firmada por el cliente · ${longDate(car.enteredAt)}` : 'Sin firma del cliente.'}
+            </Txt>
+            <Tag label={car.signed ? 'Firmada' : 'Sin firma'} bg={car.signed ? C.greenBg : C.amberBg} fg={car.signed ? C.green : C.amber} />
+          </Row>
+          <Btn label="Ver e imprimir hoja" icon="print-outline" onPress={() => router.push({ pathname: '/hoja/[id]', params: { id: car.id } })} />
         </Card>
 
         <Card>

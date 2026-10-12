@@ -35,6 +35,16 @@ export const INSPECTION_POINTS = [
   'Tapón gasolina',
 ] as const;
 
+/** Fotos obligatorias al recibir el coche, en este orden (las que se agreguen después son "extra"). */
+export const ENTRY_PHOTO_LABELS = ['Frente', 'Atrás', 'Lado izquierdo', 'Lado derecho'] as const;
+
+/** Firma del cliente: trazos SVG y el tamaño del recuadro donde se dibujaron. */
+export interface Signature {
+  w: number;
+  h: number;
+  strokes: string[];
+}
+
 export type ShopStatus = 'activo' | 'pausado' | 'invitado';
 
 export interface Shop {
@@ -48,10 +58,9 @@ export interface Shop {
   status: ShopStatus;
   verified: boolean;
   hours: string;
-  /** Posición en el mapa de ejemplo, 0 a 1 */
-  mapX: number;
-  mapY: number;
-  distanceKm: number;
+  /** Ubicación del taller en grados decimales (WGS84), la captura el admin en el alta. */
+  lat: number;
+  lng: number;
 }
 
 export type PayRule = { type: 'fijo'; amount: number } | { type: 'porcentaje'; pct: number };
@@ -87,6 +96,18 @@ export interface LogEntry {
   visibleToClient: boolean;
 }
 
+/** Escaneo de diagnóstico (OBDII) registrado en un expediente. Sin códigos = escaneo limpio. */
+export interface Scan {
+  id: string;
+  at: string;
+  who: string;
+  /** Códigos de falla (DTC) como P0302. */
+  codes: string[];
+  note: string;
+  /** Foto de la pantalla del escáner. */
+  photo?: string;
+}
+
 export interface Damage {
   id: number;
   x: number;
@@ -105,7 +126,10 @@ export interface Car {
   color: string;
   plates: string;
   vin: string;
+  /** Lectura del odómetro (km). */
   km: string;
+  /** Foto del tablero completo con el odómetro, tomada al recibir el coche. */
+  dashboardPhoto?: string;
   client: { name: string; phone: string; address: string };
   state: CarState;
   helperId?: string;
@@ -115,9 +139,12 @@ export interface Car {
   damages: Damage[];
   photos: string[];
   signed: boolean;
+  /** Trazos de la firma de recepción; es lo que se imprime en la hoja. */
+  signature?: Signature;
   costs: CostItem[];
   ivaOn: boolean;
   log: LogEntry[];
+  scans: Scan[];
   /** El cliente ya escaneó el QR y el coche está ligado a su cuenta. */
   linked: boolean;
 }

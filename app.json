@@ -43,11 +43,18 @@
         }
       ],
       [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Tu ubicación se usa para mostrarte qué talleres tienes cerca y a qué distancia."
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "cameraPermission": "La cámara se usa para tomar fotos del coche y del avance."
         }
-      ]
+      ],
+      "expo-sharing"
     ],
     "experiments": {
       "typedRoutes": true,

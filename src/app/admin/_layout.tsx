@@ -11,6 +11,7 @@ export default function AdminLayout() {
   return (
     <Tabs screenOptions={options}>
       <Tabs.Screen name="index" options={{ title: 'Talleres', tabBarIcon: tabIcon('location') }} />
+      <Tabs.Screen name="mapa" options={{ title: 'Mapa', tabBarIcon: tabIcon('map') }} />
       <Tabs.Screen name="panel" options={{ title: 'Panel', tabBarIcon: tabIcon('stats-chart') }} />
       <Tabs.Screen name="salir" options={{ title: 'Salir', tabBarIcon: tabIcon('log-out-outline') }} />
     </Tabs>
