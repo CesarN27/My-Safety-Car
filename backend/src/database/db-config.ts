@@ -14,7 +14,18 @@ export function dbConfig(
     database: env.DB_NAME,
     entities,
     migrations: [new URL('./migrations/*.js', import.meta.url).pathname],
-    // Nunca synchronize: el esquema cambia solo con migraciones.
+    // Nunca synchronize fuera de pruebas: el esquema cambia solo con migraciones.
     synchronize: false,
+    ...(env.NODE_ENV === 'test' ? testOverrides(env) : {}),
   };
+}
+
+/** Las pruebas e2e recrean el esquema en cada corrida, así que solo se permite en una base *_test. */
+function testOverrides(env: NodeJS.ProcessEnv) {
+  if (!env.DB_NAME?.endsWith('_test')) {
+    throw new Error(
+      'Las pruebas solo pueden correr contra una base cuyo nombre termine en _test',
+    );
+  }
+  return { synchronize: true, dropSchema: true, migrations: [] };
 }
