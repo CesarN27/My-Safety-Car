@@ -6,14 +6,14 @@ import { Pressable, TextInput, View } from 'react-native';
 import { PhotoSlot } from '@/components/photo-slot';
 import { SignaturePad } from '@/components/signature-pad';
 import { AppHeader, Body, Btn, Card, Chip, Field, FooterBar, Screen, SectionTag, Txt } from '@/components/ui';
+import { CLAUSULA } from '@/data/clausula';
 import { SHOP_NAME } from '@/data/seed';
 import { useStore } from '@/store/app';
 import { C, F } from '@/theme';
-import { INSPECTION_POINTS } from '@/types';
-import type { Damage, InspState } from '@/types';
+import { ENTRY_PHOTO_LABELS, INSPECTION_POINTS } from '@/types';
+import type { Damage, InspState, Signature } from '@/types';
 
 const STEPS = ['Vehículo y cliente', 'Inspección', 'Fotos y daños', 'Servicio y firma'];
-const PHOTO_LABELS = ['Frente', 'Atrás', 'Lado izquierdo', 'Lado derecho'];
 const INSP_LABEL = ['Bien', 'Dañado', 'N/A'] as const;
 const INSP_COLOR = [
   { bg: C.greenBg, fg: C.green },
@@ -29,20 +29,21 @@ export default function NuevoExpediente() {
   const [cl, setCl] = useState({ name: '', phone: '', address: '' });
   const [insp, setInsp] = useState<Record<string, InspState>>(() => Object.fromEntries(INSPECTION_POINTS.map((p) => [p, 0 as InspState])));
   const [fuel, setFuel] = useState(3);
+  const [dash, setDash] = useState<string>();
   const [photos, setPhotos] = useState<(string | undefined)[]>([undefined, undefined, undefined, undefined]);
   const [damages, setDamages] = useState<Damage[]>([]);
   const [desc, setDesc] = useState('');
   const [helperId, setHelperId] = useState<string>();
-  const [signed, setSigned] = useState(false);
+  const [signature, setSignature] = useState<Signature | null>(null);
 
   const setVF = (k: keyof typeof v) => (t: string) => setV((x) => ({ ...x, [k]: t }));
   const setCF = (k: keyof typeof cl) => (t: string) => setCl((x) => ({ ...x, [k]: t }));
 
   const ok = [
-    !!(v.brand.trim() && v.model.trim() && v.plates.trim() && cl.name.trim() && cl.phone.trim()),
+    !!(v.brand.trim() && v.model.trim() && v.plates.trim() && cl.name.trim() && cl.phone.trim() && dash),
     true,
     photos.every(Boolean),
-    !!(desc.trim() && signed),
+    !!(desc.trim() && signature),
   ][step];
 
   const create = () => {
@@ -53,6 +54,7 @@ export default function NuevoExpediente() {
       color: v.color.trim(),
       plates: v.plates.trim().toUpperCase(),
       km: v.km.trim(),
+      dashboardPhoto: dash,
       vin: v.vin.trim().toUpperCase(),
       client: { name: cl.name.trim(), phone: cl.phone.trim(), address: cl.address.trim() },
       description: desc.trim(),
@@ -60,7 +62,8 @@ export default function NuevoExpediente() {
       fuel,
       damages,
       photos: photos.filter((p): p is string => !!p),
-      signed,
+      signed: true,
+      signature: signature ?? undefined,
       helperId,
     });
     router.replace({ pathname: '/qr/[id]', params: { id } });
@@ -86,9 +89,16 @@ export default function NuevoExpediente() {
               <Field label="Año" value={v.year} onChangeText={setVF('year')} keyboardType="number-pad" maxLength={4} />
               <Field label="Color" value={v.color} onChangeText={setVF('color')} />
               <Field label="Placas" value={v.plates} onChangeText={setVF('plates')} autoCapitalize="characters" />
-              <Field label="Kilometraje" value={v.km} onChangeText={setVF('km')} keyboardType="number-pad" />
+              <Field label="Odómetro (km)" value={v.km} onChangeText={setVF('km')} keyboardType="number-pad" />
             </Row2>
             <Field label="N. de serie (VIN)" value={v.vin} onChangeText={setVF('vin')} autoCapitalize="characters" />
+            <SectionTag>Foto del tablero</SectionTag>
+            <Txt style={{ fontSize: 13, color: C.muted }}>
+              Toma una foto de todo el tablero con el coche encendido: se ve el odómetro, la gasolina y los testigos. Es obligatoria.
+            </Txt>
+            <View style={{ width: '100%' }}>
+              <PhotoSlot label="Tablero completo (odómetro)" uri={dash} onChange={setDash} />
+            </View>
             <SectionTag>Datos del cliente</SectionTag>
             <Field label="Nombre" value={cl.name} onChangeText={setCF('name')} />
             <Field label="Teléfono (le llega el QR por WhatsApp)" value={cl.phone} onChangeText={setCF('phone')} keyboardType="phone-pad" />
@@ -165,7 +175,7 @@ export default function NuevoExpediente() {
               Cuatro fotos obligatorias. Protegen al taller si hay reclamos por golpes o rayones.
             </Txt>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-              {PHOTO_LABELS.map((l, i) => (
+              {ENTRY_PHOTO_LABELS.map((l, i) => (
                 <View key={l} style={{ width: '48%', flexGrow: 1 }}>
                   <PhotoSlot label={l} uri={photos[i]} onChange={(u) => setPhotos((p) => p.map((x, j) => (j === i ? u : x)))} />
                 </View>
@@ -189,14 +199,9 @@ export default function NuevoExpediente() {
             </View>
             <SectionTag>Cláusulas y firma</SectionTag>
             <Card>
-              <Txt style={{ fontSize: 12, color: '#3F3B36', lineHeight: 18 }}>
-                El establecimiento no se hace responsable por objetos olvidados o extraviados, robo total o parcial del vehículo,
-                siniestros naturales o ajenos dentro o fuera del taller, ni por problemas legales que presente el vehículo. Los 15
-                días de garantía solo son válidos cuando el daño no se deba a uso inadecuado de la unidad. El cliente se compromete
-                a pagar el monto total que se genere en la reparación.
-              </Txt>
+              <Txt style={{ fontSize: 12, color: '#3F3B36', lineHeight: 18 }}>{CLAUSULA}</Txt>
             </Card>
-            <SignaturePad onChange={setSigned} />
+            <SignaturePad onChange={setSignature} />
           </>
         ) : null}
       </Body>

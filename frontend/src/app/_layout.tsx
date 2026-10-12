@@ -44,6 +44,7 @@ export default function RootLayout() {
           <Stack.Screen name="cliente" />
           <Stack.Screen name="nuevo-expediente" options={{ presentation: 'modal' }} />
           <Stack.Screen name="alta-taller" options={{ presentation: 'modal' }} />
+          <Stack.Screen name="escaneo" options={{ presentation: 'modal' }} />
         </Stack>
       </AppProvider>
     </SafeAreaProvider>

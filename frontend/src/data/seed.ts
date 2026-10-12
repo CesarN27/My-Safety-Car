@@ -140,6 +140,7 @@ const mk = (c: CarSeed): Car => ({
   costs: [],
   ivaOn: true,
   log: [],
+  scans: [],
   linked: false,
   ...c,
 });
@@ -175,6 +176,15 @@ export const seedCars: Car[] = [
       'Falla al encender en frío, testigo de check engine. Escanear con OBDII, revisar bujías y bobinas.',
     enteredAt: minsAgo(240),
     linked: true,
+    scans: [
+      {
+        id: 'sc1',
+        at: minsAgo(210),
+        who: 'José Luis',
+        codes: ['P0302'],
+        note: 'Falla de encendido en el cilindro 2. Se revisó con el escáner OBDII antes de tocar nada.',
+      },
+    ],
     costs: [
       item('a1', 'refaccion', 'Juego de bujías NGK ×4', 480, 720, 'Refaccionaria El Güero'),
       item('a2', 'refaccion', 'Bobina de encendido', 650, 950, 'AutoZone'),

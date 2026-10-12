@@ -27,6 +27,28 @@ export default function Tablero() {
     <Screen>
       <View style={{ backgroundColor: C.ink, paddingTop: insets.top + 12, paddingHorizontal: 20, paddingBottom: 14, overflow: 'hidden' }}>
         <Slash width={160} height={10} />
+        <Pressable
+          onPress={() => router.push('/escaneo')}
+          accessibilityRole="button"
+          accessibilityLabel="Registrar escaneo"
+          style={({ pressed }) => ({
+            position: 'absolute',
+            right: 16,
+            top: insets.top + 10,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            minHeight: 44,
+            paddingHorizontal: 14,
+            borderRadius: 10,
+            backgroundColor: pressed ? '#fff' : C.orange,
+          })}
+        >
+          <Ionicons name="scan-outline" size={20} color={C.text} />
+          <Txt b style={{ fontSize: 14 }}>
+            Escaneo
+          </Txt>
+        </Pressable>
         <Wordmark size={28} />
         <Txt style={{ color: C.mutedLight, fontSize: 13, marginTop: 4 }}>
           {todayLabel()} · {inShop} coches en el taller
