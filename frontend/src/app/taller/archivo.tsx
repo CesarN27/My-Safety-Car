@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
 
+import { useTabBottom } from '@/components/role-tabs';
 import { AppHeader, Empty, Screen, StatePill, Txt } from '@/components/ui';
 import { groupByYearMonth, matchesCar } from '@/lib/archive';
 import { carTotals, money } from '@/lib/money';
@@ -11,6 +12,7 @@ import { C, F } from '@/theme';
 
 /** Archivo: todos los expedientes guardados en carpetas por año y mes de ingreso. */
 export default function Archivo() {
+  const tabBottom = useTabBottom();
   const { cars, helpers } = useStore();
   const [q, setQ] = useState('');
   const [open, setOpen] = useState<Record<string, boolean>>({});
@@ -37,7 +39,7 @@ export default function Archivo() {
           style={{ minHeight: 46, borderWidth: 1.5, borderColor: C.border, borderRadius: 10, paddingHorizontal: 12, fontSize: 15, fontFamily: F.reg, backgroundColor: '#fff' }}
         />
       </View>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40, gap: 14 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabBottom, gap: 14 }}>
         {years.map((y) => (
           <View key={y.year} style={{ gap: 8 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>

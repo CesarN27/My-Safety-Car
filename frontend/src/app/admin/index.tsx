@@ -1,9 +1,10 @@
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
+import { useTabBottom } from '@/components/role-tabs';
 import { OsmMap } from '@/components/osm-map';
+import { GlassButton } from '@/components/glass-button';
 import { AppHeader, Chip, Disp, Row, Screen, Tag, Txt } from '@/components/ui';
 import { initials } from '@/lib/format';
 import { useStore } from '@/store/app';
@@ -19,6 +20,7 @@ const TAG = {
 } as const;
 
 export default function AdminTalleres() {
+  const tabBottom = useTabBottom();
   const { shops, cars } = useStore();
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>('Todos');
   const [selected, setSelected] = useState<string>();
@@ -31,17 +33,10 @@ export default function AdminTalleres() {
         eyebrow="Admin master"
         title="Talleres"
         right={
-          <Pressable
-            onPress={() => router.push('/alta-taller')}
-            accessibilityRole="button"
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: C.orange, paddingHorizontal: 14, minHeight: 44, borderRadius: 10 }}
-          >
-            <Ionicons name="add" size={20} color={C.text} />
-            <Txt b>Alta</Txt>
-          </Pressable>
+          <GlassButton label="Alta" icon="add" sf="plus" onPress={() => router.push('/alta-taller')} />
         }
       />
-      <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: tabBottom, gap: 12 }}>
         <Row style={{ gap: 8 }}>
           <Stat n={shops.filter((s) => s.status === 'activo').length} label="Talleres activos" />
           <Stat n={cars.length} label="Coches este mes" />

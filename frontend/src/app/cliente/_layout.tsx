@@ -1,19 +1,15 @@
-import { Redirect } from 'expo-router';
-import { Tabs } from 'expo-router/js-tabs';
-
-import { tabIcon, useTabScreenOptions } from '@/components/tab-options';
-import { useStore } from '@/store/app';
+import { RoleTabs } from '@/components/role-tabs';
 
 export default function ClienteLayout() {
-  const { role } = useStore();
-  const options = useTabScreenOptions();
-  if (role !== 'cliente') return <Redirect href="/" />;
   return (
-    <Tabs screenOptions={options}>
-      <Tabs.Screen name="index" options={{ title: 'Mi coche', tabBarIcon: tabIcon('car-sport') }} />
-      <Tabs.Screen name="escanear" options={{ title: 'Escanear', tabBarIcon: tabIcon('qr-code-outline') }} />
-      <Tabs.Screen name="mapa" options={{ title: 'Talleres', tabBarIcon: tabIcon('location') }} />
-      <Tabs.Screen name="salir" options={{ title: 'Salir', tabBarIcon: tabIcon('log-out-outline') }} />
-    </Tabs>
+    <RoleTabs
+      role="cliente"
+      tabs={[
+        { name: 'index', title: 'Mi coche', sf: { default: 'car', selected: 'car.fill' }, md: 'directions_car' },
+        { name: 'escanear', title: 'Escanear', sf: { default: 'qrcode.viewfinder', selected: 'qrcode.viewfinder' }, md: 'qr_code_scanner' },
+        { name: 'mapa', title: 'Talleres', sf: { default: 'mappin', selected: 'mappin' }, md: 'location_on' },
+        { name: 'salir', title: 'Salir', sf: { default: 'rectangle.portrait.and.arrow.right', selected: 'rectangle.portrait.and.arrow.right' }, md: 'logout', role: 'search' },
+      ]}
+    />
   );
 }

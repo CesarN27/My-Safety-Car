@@ -1,5 +1,6 @@
 import { View } from 'react-native';
 
+import { useTabBottom } from '@/components/role-tabs';
 import { AppHeader, Body, Card, Disp, Eyebrow, PhaseBadge, Row, Screen, Txt } from '@/components/ui';
 import { carTotals, money } from '@/lib/money';
 import { useStore } from '@/store/app';
@@ -7,6 +8,7 @@ import { C } from '@/theme';
 
 /** Resumen sencillo con lo capturado. Reportes por semana o mes y exportar llegan en la fase 4. */
 export default function Reportes() {
+  const tabBottom = useTabBottom();
   const { cars, helpers } = useStore();
   const withMoney = cars.filter((c) => c.state >= 2).map((c) => carTotals(c, helpers));
   const sum = (k: 'subtotal' | 'parts' | 'helperCost' | 'expenses' | 'profit') =>
@@ -15,7 +17,7 @@ export default function Reportes() {
   return (
     <Screen>
       <AppHeader title="Reportes" subtitle="Coches con costos capturados" />
-      <Body>
+      <Body bottom={tabBottom}>
         <View style={{ backgroundColor: C.ink, borderRadius: 14, padding: 16 }}>
           <Eyebrow style={{ color: C.mutedLight }}>Ganancia libre</Eyebrow>
           <Disp size={48} color={C.orange}>

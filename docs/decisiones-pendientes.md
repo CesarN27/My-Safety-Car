@@ -32,3 +32,7 @@ Preguntas abiertas del proyecto. Cuando se resuelva una, se borra de aquí y se 
 
 15. **Hosting.** Local por ahora (Docker). Pendiente: dónde se despliega, cómo se respaldan los datos y cómo se manejan los secretos fuera de `.env`.
 16. **Escaneos con Workflows.** Cada ejecución de un workflow (por ejemplo el escaneo de `claude-security`) pide aprobación. Decidir si se permite de forma fija para este proyecto.
+
+## Frontend
+
+17. **Pestaña "Salir" en la barra nativa.** Las tabs ahora son `NativeTabs` (Liquid Glass en iOS 26+, Material en Android) y `salir` sigue como pestaña para no cambiar el comportamiento. En una barra nativa es raro que una pestaña sea una acción: pendiente moverla a un botón de encabezado o a un perfil. También pendiente verificar en dispositivo con iOS 26 y Android que el `Redirect` por rol y el aspecto en web se vean bien; `unstable-native-tabs` puede cambiar entre versiones menores del SDK.

@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useTabBottom } from '@/components/role-tabs';
 import { Avatar, Body, Btn, Card, Disp, Empty, Eyebrow, Row, Screen, StatePill, Txt } from '@/components/ui';
 import { DEMO_HELPER_ID, SHOP_NAME } from '@/data/seed';
 import { initials } from '@/lib/format';
@@ -10,6 +11,7 @@ import { useStore } from '@/store/app';
 import { C } from '@/theme';
 
 export default function MisCoches() {
+  const tabBottom = useTabBottom();
   const { cars, helperById } = useStore();
   const insets = useSafeAreaInsets();
   const me = helperById(DEMO_HELPER_ID);
@@ -33,7 +35,7 @@ export default function MisCoches() {
         </Row>
       </View>
       <View style={{ height: 5, backgroundColor: C.orange }} />
-      <Body>
+      <Body bottom={tabBottom}>
         <View style={{ backgroundColor: C.ink, borderRadius: 14, padding: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <View style={{ flex: 1 }}>
             <Eyebrow style={{ color: C.mutedLight }}>Llevas ganado esta semana</Eyebrow>

@@ -1,8 +1,9 @@
-import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
+import { useTabBottom } from '@/components/role-tabs';
+import { FloatingButton } from '@/components/floating-button';
 import { Slash, Wordmark } from '@/components/brand';
 import { Avatar, Empty, Screen, StatePill, Txt } from '@/components/ui';
 import { ago, initials, todayLabel } from '@/lib/format';
@@ -12,6 +13,7 @@ import { STATES_SHORT } from '@/types';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function Tablero() {
+  const tabBottom = useTabBottom();
   const { cars, helperById } = useStore();
   const insets = useSafeAreaInsets();
   const [sel, setSel] = useState<number>(-1);
@@ -27,28 +29,15 @@ export default function Tablero() {
     <Screen>
       <View style={{ backgroundColor: C.ink, paddingTop: insets.top + 12, paddingHorizontal: 20, paddingBottom: 14, overflow: 'hidden' }}>
         <Slash width={160} height={10} />
-        <Pressable
-          onPress={() => router.push('/escaneo')}
-          accessibilityRole="button"
+        <FloatingButton
+          label="Escaneo"
+          icon="scan-outline"
+          sf="barcode.viewfinder"
           accessibilityLabel="Registrar escaneo"
-          style={({ pressed }) => ({
-            position: 'absolute',
-            right: 16,
-            top: insets.top + 10,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 6,
-            minHeight: 44,
-            paddingHorizontal: 14,
-            borderRadius: 10,
-            backgroundColor: pressed ? '#fff' : C.orange,
-          })}
-        >
-          <Ionicons name="scan-outline" size={20} color={C.text} />
-          <Txt b style={{ fontSize: 14 }}>
-            Escaneo
-          </Txt>
-        </Pressable>
+          onPress={() => router.push('/escaneo')}
+          position={{ right: 16, top: insets.top + 10 }}
+          fontSize={14}
+        />
         <Wordmark size={28} />
         <Txt style={{ color: C.mutedLight, fontSize: 13, marginTop: 4 }}>
           {todayLabel()} · {inShop} coches en el taller
@@ -84,7 +73,7 @@ export default function Tablero() {
         </ScrollView>
       </View>
 
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 100, gap: 10 }}>
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: tabBottom + 76, gap: 10 }}>
         {shown.map((c) => {
           const h = helperById(c.helperId);
           return (
@@ -125,30 +114,15 @@ export default function Tablero() {
         {shown.length === 0 ? <Empty text="No hay coches en este estado." /> : null}
       </ScrollView>
 
-      <Pressable
+      <FloatingButton
+        label="Nuevo expediente"
+        icon="add"
+        sf="plus"
         onPress={() => router.push('/nuevo-expediente')}
-        accessibilityRole="button"
-        style={({ pressed }) => ({
-          position: 'absolute',
-          right: 16,
-          bottom: 16,
-          flexDirection: 'row',
-          alignItems: 'center',
-          gap: 8,
-          minHeight: 52,
-          paddingHorizontal: 18,
-          borderRadius: 26,
-          backgroundColor: pressed ? C.orangeHi : C.orange,
-          elevation: 6,
-          shadowColor: '#000',
-          shadowOpacity: 0.25,
-          shadowRadius: 10,
-          shadowOffset: { width: 0, height: 5 },
-        })}
-      >
-        <Ionicons name="add" size={22} color={C.text} />
-        <Txt b>Nuevo expediente</Txt>
-      </Pressable>
+        position={{ right: 16, bottom: 16 + insets.bottom }}
+        radius={26}
+        minHeight={52}
+      />
     </Screen>
   );
 }

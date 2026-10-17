@@ -36,7 +36,7 @@ export default function Escanear() {
 
   return (
     <Screen>
-      <View style={{ flex: 1, backgroundColor: C.ink, paddingTop: insets.top + 16, paddingHorizontal: 24, gap: 14 }}>
+      <View style={{ flex: 1, backgroundColor: C.ink, paddingTop: insets.top + 16, paddingBottom: insets.bottom, paddingHorizontal: 24, gap: 14 }}>
         <View>
           <Disp size={30} color="#fff">
             Escanea tu QR

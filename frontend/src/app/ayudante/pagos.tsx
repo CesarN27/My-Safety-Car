@@ -1,3 +1,4 @@
+import { useTabBottom } from '@/components/role-tabs';
 import { AppHeader, Body, Card, Disp, Eyebrow, Row, Screen, Tag, Txt } from '@/components/ui';
 import { DEMO_HELPER_ID } from '@/data/seed';
 import { helperPay, money } from '@/lib/money';
@@ -6,6 +7,7 @@ import { C } from '@/theme';
 
 /** El ayudante ve solo lo suyo: nunca costos ni ganancia del taller. */
 export default function MisPagos() {
+  const tabBottom = useTabBottom();
   const { cars, helperById } = useStore();
   const me = helperById(DEMO_HELPER_ID);
   if (!me) return <Screen>{null}</Screen>;
@@ -15,7 +17,7 @@ export default function MisPagos() {
   return (
     <Screen>
       <AppHeader title="Mis pagos" subtitle="Semana en curso" />
-      <Body>
+      <Body bottom={tabBottom}>
         <Card style={{ alignItems: 'center', paddingVertical: 20 }}>
           <Eyebrow>Total de la semana</Eyebrow>
           <Disp size={48}>{money(total)}</Disp>

@@ -1,20 +1,16 @@
-import { Redirect } from 'expo-router';
-import { Tabs } from 'expo-router/js-tabs';
-
-import { tabIcon, useTabScreenOptions } from '@/components/tab-options';
-import { useStore } from '@/store/app';
+import { RoleTabs } from '@/components/role-tabs';
 
 export default function TallerLayout() {
-  const { role } = useStore();
-  const options = useTabScreenOptions();
-  if (role !== 'taller') return <Redirect href="/" />;
   return (
-    <Tabs screenOptions={options}>
-      <Tabs.Screen name="index" options={{ title: 'Coches', tabBarIcon: tabIcon('car-sport') }} />
-      <Tabs.Screen name="archivo" options={{ title: 'Archivo', tabBarIcon: tabIcon('folder-open') }} />
-      <Tabs.Screen name="ayudantes" options={{ title: 'Ayudantes', tabBarIcon: tabIcon('people') }} />
-      <Tabs.Screen name="reportes" options={{ title: 'Reportes', tabBarIcon: tabIcon('stats-chart') }} />
-      <Tabs.Screen name="salir" options={{ title: 'Salir', tabBarIcon: tabIcon('log-out-outline') }} />
-    </Tabs>
+    <RoleTabs
+      role="taller"
+      tabs={[
+        { name: 'index', title: 'Coches', sf: { default: 'car', selected: 'car.fill' }, md: 'directions_car' },
+        { name: 'archivo', title: 'Archivo', sf: { default: 'folder', selected: 'folder.fill' }, md: 'folder_open' },
+        { name: 'ayudantes', title: 'Ayudantes', sf: { default: 'person.2', selected: 'person.2.fill' }, md: 'group' },
+        { name: 'reportes', title: 'Reportes', sf: { default: 'chart.bar', selected: 'chart.bar.fill' }, md: 'bar_chart' },
+        { name: 'salir', title: 'Salir', sf: { default: 'rectangle.portrait.and.arrow.right', selected: 'rectangle.portrait.and.arrow.right' }, md: 'logout', role: 'search' },
+      ]}
+    />
   );
 }

@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
+import { useTabBottom } from '@/components/role-tabs';
 import { PhotoSlot } from '@/components/photo-slot';
 import { AppHeader, Body, Btn, Card, Chip, Disp, Eyebrow, Field, Row, Screen, Tag, Txt } from '@/components/ui';
 import { initials } from '@/lib/format';
@@ -13,6 +14,7 @@ import type { Helper } from '@/types';
 const ruleText = (h: Helper) => (h.pay.type === 'fijo' ? `Fijo ${money(h.pay.amount)} por coche` : `${h.pay.pct}% de la mano de obra`);
 
 export default function Ayudantes() {
+  const tabBottom = useTabBottom();
   const { helpers, cars, payHelper, addHelper } = useStore();
   const [adding, setAdding] = useState(false);
 
@@ -35,7 +37,7 @@ export default function Ayudantes() {
           </Pressable>
         }
       />
-      <Body>
+      <Body bottom={tabBottom}>
         <View style={{ backgroundColor: C.ink, borderRadius: 14, padding: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <View style={{ flex: 1 }}>
             <Txt b style={{ fontSize: 12, color: C.mutedLight, textTransform: 'uppercase', letterSpacing: 0.6 }}>

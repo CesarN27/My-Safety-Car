@@ -2,6 +2,7 @@ import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { OsmMap } from '@/components/osm-map';
 import { AppHeader, Chip, Row, Screen, Tag, Txt } from '@/components/ui';
@@ -22,6 +23,7 @@ const TAG = {
 /** Mapa completo con todos los talleres dados de alta (activos, pausados e invitados) y su ficha de ubicación. */
 export default function AdminMapa() {
   const { shops } = useStore();
+  const insets = useSafeAreaInsets();
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>('Todos');
   const [sel, setSel] = useState<string>();
 
@@ -41,7 +43,7 @@ export default function AdminMapa() {
 
       <OsmMap shops={shown} selectedId={cur?.id} onSelect={setSel} legend />
 
-      <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16, gap: 10 }}>
+      <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16, paddingBottom: 16 + insets.bottom, gap: 10 }}>
         {cur ? (
           <>
             <Row style={{ justifyContent: 'space-between', gap: 8 }}>

@@ -48,7 +48,7 @@ export default function MapaTalleres() {
       <OsmMap shops={visible} selectedId={cur?.id} onSelect={setSel} user={me} />
 
       {cur ? (
-        <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16, gap: 10, elevation: 8 }}>
+        <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16, paddingBottom: 16 + insets.bottom, gap: 10, elevation: 8 }}>
           <Row style={{ gap: 12 }}>
             <View style={{ width: 56, height: 56, borderRadius: 12, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' }}>
               <Disp size={20} color={C.orange}>

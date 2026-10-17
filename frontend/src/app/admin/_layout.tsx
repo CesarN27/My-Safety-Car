@@ -1,19 +1,15 @@
-import { Redirect } from 'expo-router';
-import { Tabs } from 'expo-router/js-tabs';
-
-import { tabIcon, useTabScreenOptions } from '@/components/tab-options';
-import { useStore } from '@/store/app';
+import { RoleTabs } from '@/components/role-tabs';
 
 export default function AdminLayout() {
-  const { role } = useStore();
-  const options = useTabScreenOptions();
-  if (role !== 'admin') return <Redirect href="/" />;
   return (
-    <Tabs screenOptions={options}>
-      <Tabs.Screen name="index" options={{ title: 'Talleres', tabBarIcon: tabIcon('location') }} />
-      <Tabs.Screen name="mapa" options={{ title: 'Mapa', tabBarIcon: tabIcon('map') }} />
-      <Tabs.Screen name="panel" options={{ title: 'Panel', tabBarIcon: tabIcon('stats-chart') }} />
-      <Tabs.Screen name="salir" options={{ title: 'Salir', tabBarIcon: tabIcon('log-out-outline') }} />
-    </Tabs>
+    <RoleTabs
+      role="admin"
+      tabs={[
+        { name: 'index', title: 'Talleres', sf: { default: 'mappin', selected: 'mappin' }, md: 'location_on' },
+        { name: 'mapa', title: 'Mapa', sf: { default: 'map', selected: 'map.fill' }, md: 'map' },
+        { name: 'panel', title: 'Panel', sf: { default: 'chart.bar', selected: 'chart.bar.fill' }, md: 'bar_chart' },
+        { name: 'salir', title: 'Salir', sf: { default: 'rectangle.portrait.and.arrow.right', selected: 'rectangle.portrait.and.arrow.right' }, md: 'logout', role: 'search' },
+      ]}
+    />
   );
 }

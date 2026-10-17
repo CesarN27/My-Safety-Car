@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useTabBottom } from '@/components/role-tabs';
 import { Timeline } from '@/components/timeline';
 import { Btn, Card, Chip, Disp, Eyebrow, ProgressBar, Row, Screen, Txt } from '@/components/ui';
 import { digits } from '@/lib/format';
@@ -14,6 +15,7 @@ import { C } from '@/theme';
 import { STATES } from '@/types';
 
 export default function MiCoche() {
+  const tabBottom = useTabBottom();
   const { cars, shops } = useStore();
   const insets = useSafeAreaInsets();
   const mine = cars.filter((c) => c.linked);
@@ -63,7 +65,7 @@ export default function MiCoche() {
       </View>
       <View style={{ height: 5, backgroundColor: C.orange }} />
 
-      <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: tabBottom, gap: 12 }}>
         {mine.length > 1 ? (
           <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
             {mine.map((c) => (
