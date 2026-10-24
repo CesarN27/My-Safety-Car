@@ -2,6 +2,7 @@ import { Image } from 'expo-image';
 import { View } from 'react-native';
 
 import { Txt } from '@/components/ui';
+import { imageSource } from '@/lib/api';
 import { when } from '@/lib/format';
 import { C } from '@/theme';
 import { STATES } from '@/types';
@@ -40,7 +41,7 @@ export function Timeline({ log, forClient }: { log: LogEntry[]; forClient?: bool
               {showMedia && l.photos.length ? (
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
                   {l.photos.map((u) => (
-                    <Image key={u} source={{ uri: u }} style={{ width: 84, height: 64, borderRadius: 8 }} contentFit="cover" />
+                    <Image key={u} source={imageSource(u)} style={{ width: 84, height: 64, borderRadius: 8 }} contentFit="cover" />
                   ))}
                 </View>
               ) : null}

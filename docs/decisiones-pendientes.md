@@ -34,4 +34,6 @@ Preguntas abiertas del proyecto. Cuando se resuelva una, se borra de aquí y se 
 ## Frontend
 
 19. **Pestaña "Salir" en la barra nativa.** Las tabs ahora son `NativeTabs` (Liquid Glass en iOS 26+, Material en Android) y `salir` sigue como pestaña para no cambiar el comportamiento. En una barra nativa es raro que una pestaña sea una acción: pendiente moverla a un botón de encabezado o a un perfil. También pendiente verificar en dispositivo con iOS 26 y Android que el `Redirect` por rol y el aspecto en web se vean bien; `unstable-native-tabs` puede cambiar entre versiones menores del SDK.
-20. **Redondeo.** El frontend redondea el dinero a pesos y el servidor a centavos. Al conectar el frontend, mostrar lo que manda el servidor.
+20. **Sesión en la app.** Para la demo la sesión vive en memoria: al cerrar o recargar la app hay que volver a entrar. Pendiente guardarla (por ejemplo con `expo-secure-store`).
+21. **Límite de intentos y demo.** 5 inicios de sesión por minuto por IP: en una demo con varios teléfonos en la misma red, cambiar de cuenta rápido da "Demasiados intentos". Decidir si se sube el límite o se cuenta por teléfono (ver punto 16).
+22. **Lint del frontend.** `npx expo lint` marca `expo-print` y `expo-sharing` como no resueltos en `src/lib/print-sheet.ts` aunque están instalados y el typecheck los resuelve; viene de antes de conectar la API. Revisar la configuración del resolver de ESLint.

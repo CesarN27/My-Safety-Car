@@ -16,6 +16,8 @@ export default function Costos() {
   const car = carById(id);
   const [items, setItems] = useState<CostItem[]>(car?.costs ?? []);
   const [ivaOn, setIvaOn] = useState(car?.ivaOn ?? true);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   if (!car) return <Screen><AppHeader title="Costos" onBack /></Screen>;
 
   const helper = helperById(car.helperId);
@@ -25,9 +27,17 @@ export default function Costos() {
   const add = (kind: CostKind) => setItems((xs) => [...xs, { id: 'n' + Date.now() + xs.length, kind, desc: '', cost: 0, price: 0 }]);
   const remove = (itemId: string) => setItems((xs) => xs.filter((x) => x.id !== itemId));
 
-  const save = () => {
-    saveCosts(car.id, items.filter((i) => i.desc.trim() || i.cost || i.price), ivaOn);
-    router.back();
+  const save = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await saveCosts(car.id, items.filter((i) => i.desc.trim() || i.cost || i.price), ivaOn);
+      router.back();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudieron guardar los costos.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -113,7 +123,12 @@ export default function Costos() {
       </Body>
       <FooterBar>
         <View style={{ flex: 1 }}>
-          <Btn label="Guardar costos" onPress={save} />
+          {error ? (
+            <Txt accessibilityRole="alert" style={{ color: C.red, fontSize: 13, marginBottom: 6 }}>
+              {error}
+            </Txt>
+          ) : null}
+          <Btn label={busy ? 'Guardando…' : 'Guardar costos'} onPress={save} disabled={busy} />
         </View>
       </FooterBar>
     </Screen>

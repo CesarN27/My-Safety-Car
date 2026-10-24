@@ -6,8 +6,6 @@ import { Pressable, TextInput, View } from 'react-native';
 import { PhotoSlot } from '@/components/photo-slot';
 import { SignaturePad } from '@/components/signature-pad';
 import { AppHeader, Body, Btn, Card, Chip, Field, FooterBar, Screen, SectionTag, Txt } from '@/components/ui';
-import { CLAUSULA } from '@/data/clausula';
-import { SHOP_NAME } from '@/data/seed';
 import { useStore } from '@/store/app';
 import { C, F } from '@/theme';
 import { ENTRY_PHOTO_LABELS, INSPECTION_POINTS } from '@/types';
@@ -22,8 +20,11 @@ const INSP_COLOR = [
 ] as const;
 
 export default function NuevoExpediente() {
-  const { addCar, helpers } = useStore();
+  const { addCar, helpers, shops } = useStore();
+  const shop = shops[0];
   const [step, setStep] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const [v, setV] = useState({ brand: '', model: '', year: '', color: '', plates: '', km: '', vin: '' });
   const [cl, setCl] = useState({ name: '', phone: '', address: '' });
@@ -46,8 +47,11 @@ export default function NuevoExpediente() {
     !!(desc.trim() && signature),
   ][step];
 
-  const create = () => {
-    const id = addCar({
+  const create = async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const id = await addCar({
       brand: v.brand.trim(),
       model: v.model.trim(),
       year: v.year.trim(),
@@ -62,16 +66,20 @@ export default function NuevoExpediente() {
       fuel,
       damages,
       photos: photos.filter((p): p is string => !!p),
-      signed: true,
       signature: signature ?? undefined,
       helperId,
     });
-    router.replace({ pathname: '/qr/[id]', params: { id } });
+      router.replace({ pathname: '/qr/[id]', params: { id } });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo crear el expediente.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
     <Screen>
-      <AppHeader title="Nuevo expediente" subtitle={`${SHOP_NAME} · paso ${step + 1} de 4 · ${STEPS[step]}`} onBack={() => router.back()}>
+      <AppHeader title="Nuevo expediente" subtitle={`${shop?.name ?? 'Taller'} · paso ${step + 1} de 4 · ${STEPS[step]}`} onBack={() => router.back()}>
         <View style={{ flexDirection: 'row', gap: 6, paddingTop: 12 }}>
           {STEPS.map((_, i) => (
             <View key={i} style={{ flex: 1, height: 5, borderRadius: 3, backgroundColor: i <= step ? C.orange : '#3A3A3A' }} />
@@ -199,20 +207,25 @@ export default function NuevoExpediente() {
             </View>
             <SectionTag>Cláusulas y firma</SectionTag>
             <Card>
-              <Txt style={{ fontSize: 12, color: '#3F3B36', lineHeight: 18 }}>{CLAUSULA}</Txt>
+              <Txt style={{ fontSize: 12, color: '#3F3B36', lineHeight: 18 }}>{shop?.clauses || 'Este taller no ha capturado sus cláusulas.'}</Txt>
             </Card>
             <SignaturePad onChange={setSignature} />
           </>
         ) : null}
       </Body>
 
+      {error ? (
+        <Txt accessibilityRole="alert" style={{ color: C.red, fontSize: 13, textAlign: 'center', paddingHorizontal: 16 }}>
+          {error}
+        </Txt>
+      ) : null}
       <FooterBar>
         {step > 0 ? <Btn label="Atrás" kind="outline" onPress={() => setStep(step - 1)} /> : null}
         <View style={{ flex: 1 }}>
           {step < 3 ? (
             <Btn label="Siguiente" onPress={() => setStep(step + 1)} disabled={!ok} />
           ) : (
-            <Btn label="Crear expediente y QR" onPress={create} disabled={!ok} />
+            <Btn label={busy ? 'Guardando y subiendo fotos…' : 'Crear expediente y QR'} onPress={create} disabled={!ok || busy} />
           )}
         </View>
       </FooterBar>

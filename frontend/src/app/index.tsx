@@ -1,35 +1,52 @@
-import { Ionicons } from '@expo/vector-icons';
 import { Redirect, router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, ScrollView, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Slash, Wordmark } from '@/components/brand';
-import { Btn, Eyebrow, Screen, Txt, type IconName } from '@/components/ui';
+import { Btn, Screen, Txt } from '@/components/ui';
 import { useStore } from '@/store/app';
 import { C, F } from '@/theme';
 import type { Role } from '@/types';
 
-const ROLES: { role: Role; title: string; sub: string; icon: IconName; href: '/admin' | '/taller' | '/ayudante' | '/cliente' }[] = [
-  { role: 'admin', title: 'Admin master', sub: 'Alta de talleres y mapa', icon: 'star', href: '/admin' },
-  { role: 'taller', title: 'Taller (dueño)', sub: 'Expedientes, costos, ayudantes, QR', icon: 'construct', href: '/taller' },
-  { role: 'ayudante', title: 'Ayudante', sub: 'Mis coches asignados y mis pagos', icon: 'person', href: '/ayudante' },
-  { role: 'cliente', title: 'Cliente', sub: 'Escanear QR y ver mi coche', icon: 'car-sport', href: '/cliente' },
-];
+const HOME: Record<Role, '/admin' | '/taller' | '/ayudante' | '/cliente'> = {
+  admin: '/admin',
+  taller: '/taller',
+  ayudante: '/ayudante',
+  cliente: '/cliente',
+};
 
 export default function Inicio() {
-  const { role, signIn } = useStore();
+  const { role, requestCode, verifyCode, loading } = useStore();
   const insets = useSafeAreaInsets();
   const [phone, setPhone] = useState('');
+  const [code, setCode] = useState('');
+  const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Si ya hay sesión, directo a su vista (al volver con "atrás" desde un rol).
-  const current = ROLES.find((r) => r.role === role);
-  if (current) return <Redirect href={current.href} />;
+  if (role) return <Redirect href={HOME[role]} />;
 
-  const enter = (r: (typeof ROLES)[number]) => {
-    signIn(r.role);
-    router.replace(r.href);
+  const run = (fn: () => Promise<void>) => async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await fn();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo completar.');
+    } finally {
+      setBusy(false);
+    }
   };
+  const ask = run(async () => {
+    await requestCode(phone);
+    setSent(true);
+  });
+  const enter = run(async () => {
+    const r = await verifyCode(phone, code);
+    router.replace(HOME[r]);
+  });
 
   return (
     <Screen>
@@ -66,43 +83,36 @@ export default function Inicio() {
               style={{ flex: 1, minHeight: 48, borderWidth: 1.5, borderColor: C.border, borderRadius: 10, paddingHorizontal: 14, fontSize: 16, fontFamily: F.reg, backgroundColor: '#fff' }}
             />
           </View>
-          <Btn label="Recibir código por WhatsApp" disabled />
+          {sent ? (
+            <>
+              <TextInput
+                value={code}
+                onChangeText={setCode}
+                keyboardType="number-pad"
+                maxLength={6}
+                placeholder="Código de 6 dígitos"
+                placeholderTextColor="#8A847D"
+                accessibilityLabel="Código de acceso"
+                style={{ minHeight: 48, borderWidth: 1.5, borderColor: C.border, borderRadius: 10, paddingHorizontal: 14, fontSize: 18, letterSpacing: 4, fontFamily: F.reg, backgroundColor: '#fff' }}
+              />
+              <Btn label={busy || loading ? 'Entrando…' : 'Entrar'} onPress={enter} disabled={busy || code.length < 4} />
+              <Pressable onPress={() => setSent(false)} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}>
+                <Txt semi style={{ textAlign: 'center', color: C.muted }}>Cambiar número</Txt>
+              </Pressable>
+            </>
+          ) : (
+            <Btn label={busy ? 'Enviando…' : 'Recibir código'} onPress={ask} disabled={busy || phone.replace(/\D/g, '').length < 10} />
+          )}
+          {error ? (
+            <Txt style={{ fontSize: 13, color: C.red, textAlign: 'center' }} accessibilityRole="alert">
+              {error}
+            </Txt>
+          ) : null}
           <Txt style={{ fontSize: 12, color: C.muted, textAlign: 'center' }}>
-            El acceso con código llega con el servidor (fase 0). Por ahora elige un rol para recorrer la app.
+            {sent
+              ? 'Demo: el código llega por un canal simulado; usa el código de prueba del servidor (DEV_OTP_CODE).'
+              : 'Tu rol (taller, ayudante, cliente o admin) depende de la cuenta ligada a tu número.'}
           </Txt>
-        </View>
-
-        <View style={{ paddingHorizontal: 20, gap: 10, paddingBottom: insets.bottom + 24 }}>
-          <Eyebrow>Prototipo: entra como</Eyebrow>
-          {ROLES.map((r) => (
-            <Pressable
-              key={r.role}
-              onPress={() => enter(r)}
-              accessibilityRole="button"
-              style={({ pressed }) => ({
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 14,
-                padding: 14,
-                minHeight: 44,
-                backgroundColor: '#fff',
-                borderRadius: 14,
-                borderWidth: 1.5,
-                borderColor: pressed ? C.orange : C.line,
-              })}
-            >
-              <View style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: C.ink, alignItems: 'center', justifyContent: 'center' }}>
-                <Ionicons name={r.icon} size={22} color={C.orange} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Txt b style={{ fontSize: 16 }}>
-                  {r.title}
-                </Txt>
-                <Txt style={{ fontSize: 13, color: C.muted }}>{r.sub}</Txt>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={C.mutedLight} />
-            </Pressable>
-          ))}
         </View>
       </ScrollView>
     </Screen>

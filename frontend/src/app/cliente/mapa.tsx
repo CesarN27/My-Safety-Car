@@ -6,7 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { OsmMap } from '@/components/osm-map';
 import { Chip, Disp, Row, Tag, Txt } from '@/components/ui';
-import { SPECIALTIES } from '@/data/seed';
+import { SPECIALTIES } from '@/data/specialties';
 import { digits, initials } from '@/lib/format';
 import { distanceKm, formatKm } from '@/lib/geo';
 import { useUserLocation } from '@/lib/use-location';

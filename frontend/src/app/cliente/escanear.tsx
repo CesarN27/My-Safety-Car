@@ -9,16 +9,16 @@ import { useStore } from '@/store/app';
 import { C } from '@/theme';
 
 export default function Escanear() {
-  const { linkCarByToken, cars } = useStore();
+  const { linkCarByToken } = useStore();
   const insets = useSafeAreaInsets();
   const [perm, ask] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const open = (token: string) => {
-    const car = linkCarByToken(token);
-    if (!car) {
-      setError('Ese QR no es de un servicio activo. Pídele al taller que te muestre el de tu coche.');
+  const open = async (token: string) => {
+    const err = await linkCarByToken(token);
+    if (err) {
+      setError(err);
       setScanned(false);
       return;
     }
@@ -31,8 +31,6 @@ export default function Escanear() {
     open(data.match(/q\/([\w-]+)/)?.[1] ?? data);
   };
 
-  // Atajo del prototipo mientras no hay un QR real a la mano.
-  const demo = cars.find((c) => !c.linked && c.state < 5);
 
   return (
     <Screen>
@@ -70,7 +68,6 @@ export default function Escanear() {
 
         {error ? <Txt style={{ color: '#FCA5A5', fontSize: 13, textAlign: 'center' }}>{error}</Txt> : null}
         <View style={{ gap: 8, paddingBottom: 16 }}>
-          {demo ? <Btn label="Prototipo: usar un QR de ejemplo" kind="outline" onPress={() => open(demo.token)} /> : null}
           <Txt style={{ fontSize: 13, color: C.mutedLight, textAlign: 'center', lineHeight: 19 }}>
             ¿Escaneaste con la cámara del teléfono? El QR abre la app y liga tu coche solo.
           </Txt>

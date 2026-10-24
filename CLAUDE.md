@@ -6,8 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Tecnocar-Pro: app para talleres mecánicos con cuatro roles (admin master, taller, ayudante, cliente). El repo está dividido en dos carpetas:
 
-- `frontend/` — app Expo (SDK 57, Expo Router, TypeScript, React Compiler). Funciona hoy.
-- `backend/` — API NestJS 12 (ESM, `"type": "module"`, imports con `.js`) + TypeORM + PostgreSQL 17 en Docker. Hecho: esqueleto, esquema (`shops`, `users`, `helpers`, `clients`, `vehicles`, `cars`, `cost_items`, `car_logs`, `files`, `helper_payments`) con restricciones `CHECK` e índices (7 migraciones), arranque endurecido (`helmet`, `ValidationPipe` con whitelist, `.env` obligatorio y validado, Postgres solo en `127.0.0.1`). Auth hecha: login por teléfono con código simulado (`OtpProvider`), JWT de acceso + refresco rotado, guards globales (throttler → sesión → rol) y alta de talleres por el admin (`/admin/shops`). API por rol hecha: `/shop`, `/helper`, `/client`, `/public/q`, `/admin/stats`. Fotos (disco local detrás de la interfaz `Storage`, `STORAGE_DIR`) y firma (trazos JSON) hechas. Falta, en orden: conectar el frontend → login real por teléfono (canal sin definir; hoy `DevOtpProvider`).
+- `frontend/` — app Expo (SDK 57, Expo Router, TypeScript, React Compiler), conectada a la API. Para correr la demo completa (seed, cuentas, recorrido) ver `docs/demo.md`.
+- `backend/` — API NestJS 12 (ESM, `"type": "module"`, imports con `.js`) + TypeORM + PostgreSQL 17 en Docker. Hecho: esqueleto, esquema (`shops`, `users`, `helpers`, `clients`, `vehicles`, `cars`, `cost_items`, `car_logs`, `files`, `helper_payments`) con restricciones `CHECK` e índices (7 migraciones), arranque endurecido (`helmet`, `ValidationPipe` con whitelist, `.env` obligatorio y validado, Postgres solo en `127.0.0.1`). Auth hecha: login por teléfono con código simulado (`OtpProvider`), JWT de acceso + refresco rotado, guards globales (throttler → sesión → rol) y alta de talleres por el admin (`/admin/shops`). API por rol hecha: `/shop`, `/helper`, `/client`, `/public/q`, `/admin/stats`. Fotos (disco local detrás de la interfaz `Storage`, `STORAGE_DIR`) y firma (trazos JSON) hechas. Frontend conectado. Falta: login real por teléfono (canal sin definir; hoy `DevOtpProvider`), sesión persistente en la app y los pendientes de `docs/decisiones-pendientes.md`.
 
 La arquitectura planeada del backend (módulos, superficies de API por rol, fases) está en `docs/arquitectura-backend.md`; el PDF de requerimientos es `docs/especificacion-app-taller.pdf` (César, 7 oct 2026). Las preguntas abiertas viven en `docs/decisiones-pendientes.md`: si una decisión queda sin resolver, usa un valor por defecto razonable y anótala ahí. Los temas de seguridad se atienden con la skill `claude-security:claude-security`.
 
@@ -58,15 +58,15 @@ Detalles no obvios del backend:
 ## Arquitectura del frontend
 
 - **Rutas** en `frontend/src/app/` (Expo Router, `typedRoutes` activo). Un grupo por rol: `admin/`, `taller/`, `ayudante/`, `cliente/` (cada uno con su `_layout.tsx` de tabs), más pantallas de detalle compartidas en la raíz de `app/` (`expediente/[id]`, `costos/[id]`, `actualizar/[id]`, `listo/[id]`, `qr/[id]`, `q/[token]`, …). Alias `@/` → `frontend/src/`.
-- **Estado**: todo en un único `useReducer` en `src/store/app.tsx` (`AppProvider`/`useStore`), en memoria y sembrado desde `src/data/seed.ts`. Ahí vive `role` (el "login" actual es solo `signIn(role)`), y las acciones (`addCar`, `saveCosts`, `setProgress`, `linkCarByToken`, …). Este archivo es lo que el backend va a reemplazar con llamadas a la API.
+- **Estado**: `src/store/app.tsx` (`AppProvider`/`useStore`) carga los datos de la API según el rol de la sesión y expone las acciones (`addCar`, `saveCosts`, `setProgress`, `linkCarByToken`, …), todas asíncronas: devuelven el error del servidor en español. `src/lib/api.ts` es el cliente HTTP (token en memoria, renovación automática, subida multipart, `imageSource()` para mostrar fotos de la API con el token) y `src/lib/adapt.ts` traduce cada respuesta por rol a los tipos de `src/types.ts`. La URL sale de `EXPO_PUBLIC_API_URL` (`frontend/.env.local`).
 - **Modelo de dominio** en `src/types.ts`: `Car` (expediente) agrupa inspección de 15 puntos, golpes, costos, bitácora (`LogEntry`) y estado `CarState` 0–5.
-- **Dinero** en `src/lib/money.ts`: IVA 16 %, total, ganancia y pago de ayudante (fijo o porcentaje de la mano de obra) se derivan de los `CostItem`; nunca se guardan. Al hacer el backend este cálculo debe vivir en el servidor.
+- **Dinero**: lo calcula el servidor y llega en `car.totals`; `carTotals()` lo usa siempre que existe. `totals()` de `src/lib/money.ts` es solo la vista previa mientras se editan costos.
 - **Mapas**: OpenStreetMap vía WebView (`osm-map.tsx`, `osm-html.ts`) con variantes por plataforma (`map-surface.tsx` / `map-surface.web.tsx`).
-- **QR**: el link `tallerapp://q/<token>` abre `q/[token].tsx`, que entra como cliente y liga el coche con `linkCarByToken`.
+- **QR**: el link `tallerapp://q/<token>` abre `q/[token].tsx`, que guarda el token; en cuanto el cliente entra con su teléfono, `cliente/index.tsx` liga el coche (`POST /client/cars/link`).
 
-## Reglas de negocio que el backend debe imponer (hoy solo se ocultan en la UI)
+## Reglas de negocio que impone el backend (no basta con ocultarlas en la UI)
 
-1. El **cliente** solo ve el total; el **ayudante** nunca ve costos ni ganancia. Plan: rutas y formas de respuesta distintas por rol (no el mismo endpoint ocultando campos) y pruebas que verifiquen que esos roles jamás reciben `cost`, `profit` ni gastos.
+1. El **cliente** solo ve el total (y solo desde Listo); el **ayudante** nunca ve costos ni ganancia. Hay rutas y vistas distintas por rol, probadas en `test/privacy.e2e-spec.ts`.
 2. Un taller no puede ver datos de otro (filtro de taller obligatorio en cada consulta).
 3. El token del QR debe ser aleatorio y revocable.
 4. El admin da de alta talleres y los activa/pausa (`ShopStatus`).

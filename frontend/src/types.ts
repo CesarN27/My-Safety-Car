@@ -61,6 +61,8 @@ export interface Shop {
   /** Ubicación del taller en grados decimales (WGS84), la captura el admin en el alta. */
   lat: number;
   lng: number;
+  /** Cláusulas de la orden que el cliente acepta al firmar (las manda el servidor). */
+  clauses?: string;
 }
 
 export type PayRule = { type: 'fijo'; amount: number } | { type: 'porcentaje'; pct: number };
@@ -84,10 +86,24 @@ export interface CostItem {
   cost: number;
   /** Lo que se le cobra al cliente (refacciones y mano de obra). */
   price: number;
+  /** Cantidad; cost y price son por unidad. 1 si no se indica. */
+  qty?: number;
   supplier?: string;
 }
 
+/** Dinero de un expediente tal como lo calcula el servidor (el cliente solo recibe `total`). */
+export interface CarTotals {
+  subtotal: number;
+  iva: number;
+  total: number;
+  parts: number;
+  expenses: number;
+  helperCost: number;
+  profit: number;
+}
+
 export interface LogEntry {
+  id?: string;
   state: CarState;
   who: string;
   at: string;
@@ -147,4 +163,11 @@ export interface Car {
   scans: Scan[];
   /** El cliente ya escaneó el QR y el coche está ligado a su cuenta. */
   linked: boolean;
+  /** Totales calculados por el servidor; mandan sobre el cálculo local. */
+  totals?: CarTotals;
+  deliveredAt?: string | null;
+  /** Taller del coche (lo usa la vista del cliente, que puede tener coches en varios talleres). */
+  shop?: Pick<Shop, 'name' | 'phone' | 'address' | 'hours' | 'lat' | 'lng'>;
+  /** Cláusulas que el cliente aceptó al firmar. */
+  signedClauses?: string | null;
 }

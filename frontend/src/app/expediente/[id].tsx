@@ -7,6 +7,7 @@ import { Pressable, View } from 'react-native';
 import { pickPhoto } from '@/components/photo-slot';
 import { Timeline } from '@/components/timeline';
 import { AppHeader, Body, Btn, Card, Chip, Disp, Eyebrow, Row, Screen, Tag, Txt } from '@/components/ui';
+import { imageSource } from '@/lib/api';
 import { longDate, sheetPhotos } from '@/lib/hoja-html';
 import { when } from '@/lib/format';
 import { carTotals, money } from '@/lib/money';
@@ -19,11 +20,25 @@ export default function Expediente() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { carById, helpers, helperById, setProgress, setHelper, addPhoto } = useStore();
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const car = carById(id);
   if (!car) return <Screen><AppHeader title="Expediente" onBack /></Screen>;
 
   const t = carTotals(car, helpers);
   const helper = helperById(car.helperId);
+  /** Ejecuta una acción del servidor mostrando su error, si lo hay. */
+  const act = (fn: () => Promise<unknown>) => async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      const r = await fn();
+      if (typeof r === 'string') setError(r);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo completar.');
+    } finally {
+      setBusy(false);
+    }
+  };
   const next = car.state < 5 ? ((car.state + 1) as CarState) : null;
   const needsCosts = next === 4 && t.total <= 0;
   const damaged = INSPECTION_POINTS.filter((p) => car.inspection[p] === 1);
@@ -87,7 +102,8 @@ export default function Expediente() {
           {next !== null && !needsCosts ? (
             <Btn
               label={`Pasar a ${STATES[next]}`}
-              onPress={() => setError(setProgress(car.id, next))}
+              onPress={act(() => setProgress(car.id, next))}
+              disabled={busy}
             />
           ) : null}
           <Txt style={{ fontSize: 12, color: C.muted }}>El cliente recibe un aviso en cada cambio.</Txt>
@@ -103,9 +119,9 @@ export default function Expediente() {
             <Txt style={{ color: C.muted }}>Sin asignar</Txt>
           )}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            <Chip label="Sin asignar" on={!car.helperId} onPress={() => setHelper(car.id, undefined)} />
+            <Chip label="Sin asignar" on={!car.helperId} onPress={act(() => setHelper(car.id, undefined))} />
             {helpers.map((h) => (
-              <Chip key={h.id} label={h.name.split(' ')[0]} on={car.helperId === h.id} onPress={() => setHelper(car.id, h.id)} />
+              <Chip key={h.id} label={h.name.split(' ')[0]} on={car.helperId === h.id} onPress={act(() => setHelper(car.id, h.id))} />
             ))}
           </View>
         </Card>
@@ -170,7 +186,7 @@ export default function Expediente() {
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {sheetPhotos(car).map(({ uri: u, label }) => (
                 <View key={u} style={{ width: '48%', flexGrow: 1 }}>
-                  <Image source={{ uri: u }} style={{ width: '100%', aspectRatio: 4 / 3, borderRadius: 8 }} contentFit="cover" accessibilityLabel={label} />
+                  <Image source={imageSource(u)} style={{ width: '100%', aspectRatio: 4 / 3, borderRadius: 8 }} contentFit="cover" accessibilityLabel={label} />
                   <Txt semi style={{ fontSize: 11, color: C.muted, textAlign: 'center', marginTop: 2 }}>
                     {label}
                   </Txt>
@@ -186,7 +202,7 @@ export default function Expediente() {
             icon="camera-outline"
             onPress={async () => {
               const u = await pickPhoto();
-              if (u) addPhoto(car.id, u);
+              if (u) await act(() => addPhoto(car.id, u))();
             }}
           />
         </Card>
@@ -214,7 +230,7 @@ export default function Expediente() {
               </View>
             ))
           ) : (
-            <Txt style={{ color: C.muted }}>Todavía no se ha registrado ningún escaneo.</Txt>
+            <Txt style={{ color: C.muted }}>Todavía no se ha registrado ningún escaneo. (Demo: los escaneos aún no se guardan en el servidor.)</Txt>
           )}
           <Btn label="Registrar escaneo" kind="outline" icon="scan-outline" onPress={() => router.push({ pathname: '/escaneo', params: { carId: car.id } })} />
         </Card>

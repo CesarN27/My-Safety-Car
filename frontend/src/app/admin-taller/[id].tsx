@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
-import { View } from 'react-native';
+import { Alert, View } from 'react-native';
 
 import { OsmMap } from '@/components/osm-map';
 import { fixed } from '@/lib/geo';
@@ -16,7 +16,8 @@ export default function AdminTaller() {
   const shop = shops.find((s) => s.id === id);
   if (!shop) return <Screen><AppHeader title="Taller" onBack /></Screen>;
 
-  const set = (s: ShopStatus) => () => setShopStatus(shop.id, s);
+  const set = (s: ShopStatus) => () =>
+    setShopStatus(shop.id, s).catch((e: unknown) => Alert.alert('No se pudo cambiar', e instanceof Error ? e.message : ''));
 
   return (
     <Screen>

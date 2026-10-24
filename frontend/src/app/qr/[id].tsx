@@ -6,14 +6,14 @@ import QRCode from 'react-native-qrcode-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Btn, Disp, Screen, Txt, type IconName } from '@/components/ui';
-import { SHOP_NAME } from '@/data/seed';
 import { digits } from '@/lib/format';
 import { useStore } from '@/store/app';
 import { C } from '@/theme';
 
 export default function QrServicio() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { carById } = useStore();
+  const { carById, shops } = useStore();
+  const shopName = shops[0]?.name ?? 'tu taller';
   const insets = useSafeAreaInsets();
   const car = carById(id);
   if (!car) return <Screen>{null}</Screen>;
@@ -21,7 +21,7 @@ export default function QrServicio() {
   // Por ahora el QR abre la app por su esquema. Con el servidor será un link web
   // que muestra el estado aunque el cliente no tenga la app.
   const link = Linking.createURL(`q/${car.token}`, { scheme: 'tallerapp' });
-  const msg = `Hola ${car.client.name.split(' ')[0]}, sigue tu ${car.brand} ${car.model} en ${SHOP_NAME} aquí: ${link}`;
+  const msg = `Hola ${car.client.name.split(' ')[0]}, sigue tu ${car.brand} ${car.model} en ${shopName} aquí: ${link}`;
 
   const whatsapp = () => {
     const phone = digits(car.client.phone);
@@ -42,7 +42,7 @@ export default function QrServicio() {
 
         <View style={{ backgroundColor: '#fff', borderRadius: 18, overflow: 'hidden' }}>
           <View style={{ backgroundColor: C.orange, paddingHorizontal: 16, paddingVertical: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Disp size={18}>{SHOP_NAME}</Disp>
+            <Disp size={18}>{shopName}</Disp>
             <Txt b style={{ fontSize: 14 }}>FOLIO {car.folio}</Txt>
           </View>
           <View style={{ alignItems: 'center', padding: 20, gap: 12 }}>

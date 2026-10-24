@@ -20,10 +20,13 @@ export default function ActualizarAvance() {
   const [photos, setPhotos] = useState<string[]>([]);
   const [visible, setVisible] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   if (!car) return <Screen><AppHeader title="Actualizar avance" onBack /></Screen>;
 
-  const save = () => {
-    const err = setProgress(car.id, sel, { note, photos, visible });
+  const save = async () => {
+    setBusy(true);
+    const err = await setProgress(car.id, sel, { note, photos, visible });
+    setBusy(false);
     if (err) return setError(err);
     router.back();
   };
@@ -87,7 +90,7 @@ export default function ActualizarAvance() {
       </Body>
       <FooterBar>
         <View style={{ flex: 1 }}>
-          <Btn label="Guardar y avisar al cliente" onPress={save} />
+          <Btn label={busy ? 'Guardando…' : 'Guardar y avisar al cliente'} onPress={save} disabled={busy} />
         </View>
       </FooterBar>
     </Screen>

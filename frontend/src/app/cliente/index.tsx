@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as Linking from 'expo-linking';
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -9,21 +9,34 @@ import { useTabBottom } from '@/components/role-tabs';
 import { Timeline } from '@/components/timeline';
 import { Btn, Card, Chip, Disp, Eyebrow, ProgressBar, Row, Screen, Txt } from '@/components/ui';
 import { digits } from '@/lib/format';
-import { DEMO_SHOP_ID } from '@/data/seed';
 import { useStore } from '@/store/app';
 import { C } from '@/theme';
 import { STATES } from '@/types';
 
 export default function MiCoche() {
   const tabBottom = useTabBottom();
-  const { cars, shops } = useStore();
+  const { cars, reload, pendingToken, setPendingToken, linkCarByToken } = useStore();
   const insets = useSafeAreaInsets();
-  const mine = cars.filter((c) => c.linked);
+  // Primero los que siguen en el taller; los entregados quedan como historial.
+  const mine = [...cars].sort((a, b) => Number(a.state === 5) - Number(b.state === 5));
   const [pick, setPick] = useState(mine[0]?.id);
+  const [linkError, setLinkError] = useState<string | null>(null);
   const car = mine.find((c) => c.id === pick) ?? mine[0];
-  const shop = shops.find((s) => s.id === DEMO_SHOP_ID) ?? shops[0];
+  const shop = car?.shop;
 
-  if (!car) {
+  useFocusEffect(
+    useCallback(() => {
+      reload().catch(() => undefined);
+    }, [reload]),
+  );
+  // Si abrió el link del QR antes de entrar, el coche se liga en cuanto inicia sesión.
+  useEffect(() => {
+    if (!pendingToken) return;
+    setPendingToken(null);
+    linkCarByToken(pendingToken).then(setLinkError);
+  }, [pendingToken, setPendingToken, linkCarByToken]);
+
+  if (!car || !shop) {
     return (
       <Screen>
         <View style={{ flex: 1, backgroundColor: C.ink, paddingTop: insets.top + 40, paddingHorizontal: 24, gap: 14 }}>
@@ -33,6 +46,7 @@ export default function MiCoche() {
           <Txt style={{ color: '#C9C9C9', lineHeight: 22 }}>
             Cuando dejes tu coche en un taller, te dan un QR. Escanéalo para ver aquí en qué va, sin llamar.
           </Txt>
+          {linkError ? <Txt style={{ color: '#FCA5A5', fontSize: 13 }}>{linkError}</Txt> : null}
           <Btn label="Escanear mi QR" icon="qr-code-outline" onPress={() => router.navigate('/cliente/escanear')} />
         </View>
       </Screen>
@@ -69,7 +83,7 @@ export default function MiCoche() {
         {mine.length > 1 ? (
           <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
             {mine.map((c) => (
-              <Chip key={c.id} label={`${c.brand} ${c.model}`} on={c.id === car.id} onPress={() => setPick(c.id)} />
+              <Chip key={c.id} label={`${c.brand} ${c.model}${c.state === 5 ? ' · entregado' : ''}`} on={c.id === car.id} onPress={() => setPick(c.id)} />
             ))}
           </View>
         ) : null}

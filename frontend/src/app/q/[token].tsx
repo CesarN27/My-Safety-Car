@@ -4,18 +4,19 @@ import { useEffect } from 'react';
 import { Screen } from '@/components/ui';
 import { useStore } from '@/store/app';
 
-/** Destino del link del QR (tallerapp://q/<token>): liga el coche al cliente y abre su vista. */
+/**
+ * Destino del link del QR (tallerapp://q/<token>). El token se guarda y el coche se liga en
+ * cuanto el cliente entra con su teléfono (el servidor solo lo liga si es el teléfono que dio
+ * en el taller).
+ */
 export default function AbrirQr() {
   const { token } = useLocalSearchParams<{ token: string }>();
-  const { role, signIn, linkCarByToken } = useStore();
+  const { role, setPendingToken } = useStore();
 
   useEffect(() => {
-    if (role !== 'cliente') signIn('cliente');
-    linkCarByToken(token);
-    // Solo al abrir el link.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+    if (token) setPendingToken(token);
+  }, [token, setPendingToken]);
 
-  if (role !== 'cliente') return <Screen>{null}</Screen>;
-  return <Redirect href="/cliente" />;
+  if (!token) return <Screen>{null}</Screen>;
+  return <Redirect href={role === 'cliente' ? '/cliente' : '/'} />;
 }

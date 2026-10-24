@@ -7,7 +7,6 @@ import { Pressable, View } from 'react-native';
 import { Slash } from '@/components/brand';
 import { AppHeader, Body, Btn, Card, Disp, Eyebrow, FooterBar, Row, Screen, Txt } from '@/components/ui';
 import { carTotals, money } from '@/lib/money';
-import { DEMO_SHOP_ID } from '@/data/seed';
 import { useStore } from '@/store/app';
 import { C } from '@/theme';
 
@@ -17,8 +16,8 @@ export default function Listo() {
   const { carById, helpers, shops } = useStore();
   const [sent, setSent] = useState(false);
   const car = carById(id);
-  const shop = shops.find((s) => s.id === DEMO_SHOP_ID) ?? shops[0];
-  if (!car) return <Screen><AppHeader title="Tu coche" onBack /></Screen>;
+  const shop = car?.shop ?? shops[0];
+  if (!car || !shop) return <Screen><AppHeader title="Tu coche" onBack /></Screen>;
 
   const { total } = carTotals(car, helpers);
   const done = car.log.find((l) => l.state === 4 && l.visibleToClient && l.note)?.note;
@@ -59,7 +58,7 @@ export default function Listo() {
           </Row>
         </Card>
         <Txt style={{ fontSize: 13, color: C.muted, lineHeight: 19, paddingHorizontal: 4 }}>
-          Garantía de 15 días en la reparación, siempre que el daño no se deba a uso inadecuado.
+          {car.signedClauses || 'Garantía de 15 días en la reparación, siempre que el daño no se deba a uso inadecuado.'}
         </Txt>
       </Body>
       {car.state === 4 ? (

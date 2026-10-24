@@ -7,8 +7,8 @@ import { C } from '@/theme';
 
 export default function AdminPanel() {
   const tabBottom = useTabBottom();
-  const { shops, cars } = useStore();
-  const active = cars.filter((c) => c.state < 5).length;
+  const { shops, stats } = useStore();
+  const entered = stats?.carsByMonth.reduce((s, m) => s + m.count, 0) ?? 0;
   return (
     <Screen>
       <AppHeader eyebrow="Admin master" title="Panel" subtitle="Solo conteos: no se ven los números de cada taller" />
@@ -18,8 +18,8 @@ export default function AdminPanel() {
           <Big n={shops.filter((s) => s.status === 'invitado').length} label="Invitados sin activar" />
         </Row>
         <Row style={{ gap: 8, alignItems: 'stretch' }}>
-          <Big n={cars.length} label="Coches ingresados" />
-          <Big n={active} label="En el taller ahora" />
+          <Big n={entered} label="Coches ingresados (12 meses)" />
+          <Big n={stats?.clients ?? 0} label="Clientes registrados" />
         </Row>
         <Card>
           <Row>

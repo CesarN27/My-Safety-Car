@@ -4,6 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Alert, Pressable, View } from 'react-native';
 
 import { Txt } from '@/components/ui';
+import { imageSource } from '@/lib/api';
 import { C } from '@/theme';
 
 /** Abre la cámara; si no hay (web) o se negó el permiso, ofrece la galería. */
@@ -63,7 +64,7 @@ export function PhotoSlot({
     >
       {uri ? (
         <>
-          <Image source={{ uri }} style={{ position: 'absolute', inset: 0 }} contentFit="cover" />
+          <Image source={imageSource(uri)} style={{ position: 'absolute', inset: 0 }} contentFit="cover" />
           <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,.55)', padding: 4 }}>
             <Txt semi style={{ color: '#fff', fontSize: 11, textAlign: 'center' }}>
               {label}

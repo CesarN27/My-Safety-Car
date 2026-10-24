@@ -6,7 +6,9 @@ import { useTabBottom } from '@/components/role-tabs';
 import { PhotoSlot } from '@/components/photo-slot';
 import { AppHeader, Body, Btn, Card, Chip, Disp, Eyebrow, Field, Row, Screen, Tag, Txt } from '@/components/ui';
 import { initials } from '@/lib/format';
-import { helperPay, money } from '@/lib/money';
+import { imageSource } from '@/lib/api';
+import { Image } from 'expo-image';
+import { money } from '@/lib/money';
 import { useStore } from '@/store/app';
 import { C } from '@/theme';
 import type { Helper } from '@/types';
@@ -15,12 +17,26 @@ const ruleText = (h: Helper) => (h.pay.type === 'fijo' ? `Fijo ${money(h.pay.amo
 
 export default function Ayudantes() {
   const tabBottom = useTabBottom();
-  const { helpers, cars, payHelper, addHelper } = useStore();
+  const { helpers, cars, payHelper, addHelper, pendingByHelper } = useStore();
   const [adding, setAdding] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const earned = (h: Helper) =>
-    cars.filter((c) => c.helperId === h.id).reduce((sum, c) => sum + helperPay(c.costs, h), 0);
-  const due = helpers.filter((h) => !h.paid).reduce((s, h) => s + earned(h), 0);
+  // Lo que se le debe a cada ayudante: pagos que el servidor congela al entregar cada coche.
+  const pending = (h: Helper) => pendingByHelper[h.id]?.total ?? 0;
+  const due = helpers.reduce((s, h) => s + pending(h), 0);
+  const act = (fn: () => Promise<void>) => async () => {
+    setBusy(true);
+    setError(null);
+    try {
+      await fn();
+      setAdding(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo completar.');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   return (
     <Screen>
@@ -41,35 +57,37 @@ export default function Ayudantes() {
         <View style={{ backgroundColor: C.ink, borderRadius: 14, padding: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <View style={{ flex: 1 }}>
             <Txt b style={{ fontSize: 12, color: C.mutedLight, textTransform: 'uppercase', letterSpacing: 0.6 }}>
-              Por pagar esta semana
+              Por pagar
             </Txt>
-            <Txt style={{ fontSize: 12, color: C.mutedLight }}>Suma de lo que ganó cada ayudante</Txt>
+            <Txt style={{ fontSize: 12, color: C.mutedLight }}>Coches entregados que aún no se pagan</Txt>
           </View>
           <Disp size={30} color={C.orange}>
             {money(due)}
           </Disp>
         </View>
 
-        {adding ? (
-          <NewHelper
-            onSave={(h) => {
-              addHelper(h);
-              setAdding(false);
-            }}
-          />
+        {error ? (
+          <Txt accessibilityRole="alert" style={{ color: C.red, fontSize: 13 }}>
+            {error}
+          </Txt>
         ) : null}
+        {adding ? <NewHelper busy={busy} onSave={(h) => act(() => addHelper(h))()} /> : null}
 
         {helpers.map((h) => {
-          const mine = cars.filter((c) => c.helperId === h.id);
-          const amt = earned(h);
-          const ok = h.paid || amt === 0;
+          const mine = cars.filter((c) => c.helperId === h.id && c.state < 5);
+          const amt = pending(h);
+          const ok = amt === 0;
           return (
             <Card key={h.id} style={{ gap: 12 }}>
               <Row style={{ gap: 14 }}>
-                <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: '#2A2A2A', borderWidth: 3, borderColor: C.orange, alignItems: 'center', justifyContent: 'center' }}>
-                  <Txt b style={{ color: '#fff', fontSize: 18 }}>
-                    {initials(h.name)}
-                  </Txt>
+                <View style={{ width: 60, height: 60, borderRadius: 30, backgroundColor: '#2A2A2A', borderWidth: 3, borderColor: C.orange, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                  {h.photo ? (
+                    <Image source={imageSource(h.photo)} style={{ width: '100%', height: '100%' }} contentFit="cover" accessibilityLabel={`Foto de ${h.name}`} />
+                  ) : (
+                    <Txt b style={{ color: '#fff', fontSize: 18 }}>
+                      {initials(h.name)}
+                    </Txt>
+                  )}
                 </View>
                 <View style={{ flex: 1 }}>
                   <Txt b style={{ fontSize: 16 }}>
@@ -89,11 +107,11 @@ export default function Ayudantes() {
               </View>
               <Row style={{ justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: C.line, paddingTop: 10 }}>
                 <View>
-                  <Txt style={{ fontSize: 12, color: C.muted }}>Ganado esta semana</Txt>
+                  <Txt style={{ fontSize: 12, color: C.muted }}>Pendiente de pago</Txt>
                   <Disp size={22}>{money(amt)}</Disp>
                 </View>
                 <Pressable
-                  onPress={() => (!ok ? payHelper(h.id) : undefined)}
+                  onPress={!ok && !busy ? act(() => payHelper(h.id)) : undefined}
                   accessibilityRole="button"
                   style={{
                     minHeight: 44,
@@ -104,7 +122,7 @@ export default function Ayudantes() {
                   }}
                 >
                   <Txt b style={{ fontSize: 14, color: ok ? C.green : '#fff' }}>
-                    {h.paid ? 'Pagado' : amt === 0 ? 'Sin pendientes' : 'Marcar pagado'}
+                    {ok ? 'Sin pendientes' : 'Marcar pagado'}
                   </Txt>
                 </Pressable>
               </Row>
@@ -116,7 +134,7 @@ export default function Ayudantes() {
   );
 }
 
-function NewHelper({ onSave }: { onSave: (h: { name: string; phone: string; photo?: string; pay: Helper['pay'] }) => void }) {
+function NewHelper({ onSave, busy }: { onSave: (h: { name: string; phone: string; photo?: string; pay: Helper['pay'] }) => void; busy: boolean }) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [photo, setPhoto] = useState<string>();
@@ -146,8 +164,8 @@ function NewHelper({ onSave }: { onSave: (h: { name: string; phone: string; phot
         keyboardType="numeric"
       />
       <Btn
-        label="Guardar ayudante"
-        disabled={!name.trim() || n <= 0}
+        label={busy ? 'Guardando…' : 'Guardar ayudante'}
+        disabled={busy || !name.trim() || phone.replace(/\D/g, '').length < 10 || n <= 0}
         onPress={() =>
           onSave({
             name: name.trim(),

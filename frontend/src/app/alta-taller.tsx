@@ -4,7 +4,7 @@ import { Alert, View } from 'react-native';
 
 import { OsmMap } from '@/components/osm-map';
 import { AppHeader, Body, Btn, Chip, Field, FooterBar, Screen, SectionTag, Txt } from '@/components/ui';
-import { SPECIALTIES } from '@/data/seed';
+import { SPECIALTIES } from '@/data/specialties';
 import { fixed, parseCoord, splitPair, type LatLng } from '@/lib/geo';
 import { useStore } from '@/store/app';
 import { C } from '@/theme';
@@ -22,6 +22,8 @@ export default function AltaTaller() {
   const [hours, setHours] = useState('L–S 9:00 a 19:00');
   const [specs, setSpecs] = useState<string[]>([]);
   const [channel, setChannel] = useState<'WhatsApp' | 'Correo'>('WhatsApp');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const toggle = (s: string) => setSpecs((x) => (x.includes(s) ? x.filter((y) => y !== s) : [...x, s]));
   const latN = parseCoord(lat, 'lat');
@@ -42,9 +44,12 @@ export default function AltaTaller() {
     setLng(fixed(p.lng));
   }, []);
 
-  const save = () => {
+  const save = async () => {
     if (!pin) return;
-    addShop({
+    setBusy(true);
+    setError(null);
+    try {
+      await addShop({
       name: name.trim(),
       owner: owner.trim(),
       phone: phone.trim(),
@@ -55,8 +60,16 @@ export default function AltaTaller() {
       lat: pin.lat,
       lng: pin.lng,
     });
-    Alert.alert('Taller guardado', `Le mandamos la invitación a ${owner.trim()} por ${channel}. Queda como Invitado hasta que lo actives.`);
-    router.back();
+      Alert.alert(
+        'Taller guardado',
+        `${owner.trim()} ya puede entrar con el teléfono del taller. Queda como Invitado hasta que lo actives. (El envío de la invitación por ${channel} llega con el login real.)`,
+      );
+      router.back();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'No se pudo guardar el taller.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -128,7 +141,12 @@ export default function AltaTaller() {
       </Body>
       <FooterBar>
         <View style={{ flex: 1 }}>
-          <Btn label="Guardar y enviar invitación" onPress={save} disabled={!ready} />
+          {error ? (
+            <Txt accessibilityRole="alert" style={{ color: C.red, fontSize: 13, marginBottom: 6 }}>
+              {error}
+            </Txt>
+          ) : null}
+          <Btn label={busy ? 'Guardando…' : 'Guardar y enviar invitación'} onPress={save} disabled={!ready || busy} />
         </View>
       </FooterBar>
     </Screen>

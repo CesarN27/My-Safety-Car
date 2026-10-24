@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
 import { useTabBottom } from '@/components/role-tabs';
@@ -14,7 +14,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function Tablero() {
   const tabBottom = useTabBottom();
-  const { cars, helperById } = useStore();
+  const { cars, helperById, reload } = useStore();
+  useFocusEffect(
+    useCallback(() => {
+      reload().catch(() => undefined);
+    }, [reload]),
+  );
   const insets = useSafeAreaInsets();
   const [sel, setSel] = useState<number>(-1);
 

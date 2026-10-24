@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
+import { DEFAULT_CLAUSES } from '../../common/clauses.js';
 import type { ShopStatus } from '../../common/enums.js';
 import { normalizePhone } from '../../common/phone.js';
 import { User } from '../users/user.entity.js';
@@ -48,6 +49,7 @@ export class ShopsService {
           lng: dto.lng,
           status: 'invitado',
           verified: false,
+          clauses: DEFAULT_CLAUSES,
         }),
       );
       await tx.save(

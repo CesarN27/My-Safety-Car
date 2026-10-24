@@ -4,8 +4,7 @@ import { ActivityIndicator, Alert, View } from 'react-native';
 
 import { HtmlView } from '@/components/html-view';
 import { AppHeader, Btn, FooterBar, Screen, Txt } from '@/components/ui';
-import { DEMO_SHOP_ID } from '@/data/seed';
-import { toDataUri } from '@/lib/data-uri';
+import { fetchAsDataUri } from '@/lib/api';
 import { buildHojaHtml, sheetPhotos } from '@/lib/hoja-html';
 import { printSheet, sharePdf } from '@/lib/print-sheet';
 import { useStore } from '@/store/app';
@@ -19,7 +18,7 @@ export default function Hoja() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { carById, shops } = useStore();
   const car = carById(id);
-  const shop = shops.find((s) => s.id === DEMO_SHOP_ID) ?? shops[0];
+  const shop = shops[0];
   const [loaded, setLoaded] = useState<{ from: string; photos: (string | null)[] } | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -28,7 +27,7 @@ export default function Hoja() {
   const photos = loaded && loaded.from === key ? loaded.photos : null;
   useEffect(() => {
     let alive = true;
-    Promise.all((key ? key.split(SEP) : []).map(toDataUri)).then((p) => alive && setLoaded({ from: key, photos: p }));
+    Promise.all((key ? key.split(SEP) : []).map(fetchAsDataUri)).then((p) => alive && setLoaded({ from: key, photos: p }));
     return () => {
       alive = false;
     };

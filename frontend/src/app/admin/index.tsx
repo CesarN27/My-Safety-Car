@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Pressable, ScrollView, View } from 'react-native';
 
 import { useTabBottom } from '@/components/role-tabs';
@@ -21,7 +21,13 @@ const TAG = {
 
 export default function AdminTalleres() {
   const tabBottom = useTabBottom();
-  const { shops, cars } = useStore();
+  const { shops, stats, reload } = useStore();
+  useFocusEffect(
+    useCallback(() => {
+      reload().catch(() => undefined);
+    }, [reload]),
+  );
+  const thisMonth = stats?.carsByMonth.at(-1)?.count ?? 0;
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>('Todos');
   const [selected, setSelected] = useState<string>();
 
@@ -39,8 +45,8 @@ export default function AdminTalleres() {
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: tabBottom, gap: 12 }}>
         <Row style={{ gap: 8 }}>
           <Stat n={shops.filter((s) => s.status === 'activo').length} label="Talleres activos" />
-          <Stat n={cars.length} label="Coches este mes" />
-          <Stat n="1,120" label="Clientes" />
+          <Stat n={thisMonth} label="Coches este mes" />
+          <Stat n={stats?.clients ?? 0} label="Clientes" />
         </Row>
         <View style={{ borderRadius: 14, overflow: 'hidden', borderWidth: 1.5, borderColor: C.border }}>
           <OsmMap shops={shown} selectedId={selected} onSelect={setSelected} height={280} legend />

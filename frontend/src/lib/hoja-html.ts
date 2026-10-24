@@ -1,4 +1,3 @@
-import { CLAUSULA } from '@/data/clausula';
 import { MONTHS_FULL, clock } from '@/lib/format';
 import { ENTRY_PHOTO_LABELS } from '@/types';
 import type { Car, Shop } from '@/types';
@@ -107,7 +106,7 @@ ${dashboard}
 ${vehiclePhotos}
 
 <h2>Cláusula de aceptación</h2>
-<div class="clause">${esc(CLAUSULA)}</div>
+<div class="clause">${esc(car.signedClauses ?? shop?.clauses ?? '')}</div>
 <div class="sign">
   <div>${signature}<div><b>${esc(car.client.name)}</b></div><div class="muted">Firma del cliente · ${esc(longDate(car.enteredAt))}</div></div>
   <div><div class="sig"></div><div><b>${esc(shop?.owner ?? '')}</b></div><div class="muted">Recibe por el taller</div></div>
