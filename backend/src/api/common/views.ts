@@ -33,6 +33,7 @@ export const fileView = (f: StoredFile) => ({
   kind: f.kind,
   logId: f.carLogId,
   visibleToClient: f.visibleToClient,
+  label: f.label,
   mimeType: f.mimeType,
   size: f.size,
   createdAt: f.createdAt,

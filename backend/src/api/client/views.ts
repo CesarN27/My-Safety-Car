@@ -24,6 +24,9 @@ export const clientCarSummary = (car: Car, totals: Totals) => ({
     name: car.shop!.name,
     phone: car.shop!.phone,
     address: car.shop!.address,
+    hours: car.shop!.hours,
+    lat: car.shop!.lat,
+    lng: car.shop!.lng,
   },
   vehicle: vehicleBasics(car),
   total: visibleTotal(car, totals),
@@ -55,6 +58,7 @@ export const clientCarDetail = ({ car, log, files, totals }: CarBundle) => {
       .map((f) => ({
         id: f.id,
         kind: f.kind,
+        label: f.label,
         logId: f.carLogId,
         createdAt: f.createdAt,
       })),

@@ -1,6 +1,13 @@
 import { StreamableFile } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { IsBoolean, IsIn, IsOptional, IsUUID } from 'class-validator';
+import {
+  IsBoolean,
+  IsIn,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MaxLength,
+} from 'class-validator';
 import type { Response } from 'express';
 import {
   type CarFileKind,
@@ -29,6 +36,7 @@ export class CarUploadDto {
   @IsOptional()
   @IsIn(['true', 'false'])
   visibleToClient?: 'true' | 'false';
+  @IsOptional() @IsString() @MaxLength(40) label?: string;
 }
 
 export class VisibilityDto {

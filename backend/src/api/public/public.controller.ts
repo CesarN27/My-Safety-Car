@@ -5,6 +5,7 @@ import { Public } from '../../auth/decorators/public.decorator.js';
 import { CarLog } from '../../modules/cars/car-log.entity.js';
 import { STATE_NAMES } from '../../modules/cars/car-state.js';
 import { Car } from '../../modules/cars/car.entity.js';
+import { Shop } from '../../modules/shops/shop.entity.js';
 
 /**
  * Página del QR sin cuenta (PDF: "si no tiene la app, abre una página con el estado").
@@ -15,6 +16,26 @@ import { Car } from '../../modules/cars/car.entity.js';
 @Controller('public')
 export class PublicController {
   constructor(private readonly db: DataSource) {}
+
+  /** Talleres activos para el mapa del cliente: solo su perfil público. */
+  @Get('shops')
+  async shops() {
+    const shops = await this.db
+      .getRepository(Shop)
+      .find({ where: { status: 'activo' }, order: { name: 'ASC' } });
+    return shops.map((s) => ({
+      id: s.id,
+      name: s.name,
+      phone: s.phone,
+      zone: s.zone,
+      address: s.address,
+      specialties: s.specialties,
+      hours: s.hours,
+      verified: s.verified,
+      lat: s.lat,
+      lng: s.lng,
+    }));
+  }
 
   // Más estricto que el límite general: el token es lo único que protege esta ruta.
   @Throttle({ default: { limit: 30, ttl: 60_000 } })

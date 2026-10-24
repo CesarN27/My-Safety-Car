@@ -33,6 +33,7 @@ export const helperCarDetail = ({ car, log, files }: CarBundle) => ({
   files: files.map((f) => ({
     id: f.id,
     kind: f.kind,
+    label: f.label,
     logId: f.carLogId,
     mimeType: f.mimeType,
     size: f.size,

@@ -36,6 +36,7 @@ export interface CarUpload {
   /** Obligatorio con kind avance: la entrada de la bitácora a la que pertenece la foto. */
   logId?: string;
   visibleToClient?: boolean;
+  label?: string;
 }
 
 @Injectable()
@@ -91,6 +92,7 @@ export class FilesService {
       carLogId,
       helperId: null,
       visibleToClient: meta.visibleToClient ?? false,
+      label: meta.label?.trim() || null,
     });
   }
 
@@ -115,6 +117,7 @@ export class FilesService {
       carLogId: null,
       helperId,
       visibleToClient: false,
+      label: null,
     });
     for (const old of previous) await this.removeRow(old);
     return saved;

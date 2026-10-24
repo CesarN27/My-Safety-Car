@@ -20,6 +20,7 @@ import {
   type UploadedImage,
 } from '../../modules/files/files.service.js';
 import { HelpersService } from '../../modules/helpers/helpers.service.js';
+import { ShopsService } from '../../modules/shops/shops.service.js';
 import { LogDto, StateDto } from '../common/dto.js';
 import { CarUploadDto, ImageUpload, sendImage } from '../common/files.js';
 import { helperCarDetail, helperCarSummary, helperPayments } from './views.js';
@@ -32,7 +33,24 @@ export class HelperController {
     private readonly cars: CarsService,
     private readonly helpers: HelpersService,
     private readonly files: FilesService,
+    private readonly shops: ShopsService,
   ) {}
+
+  /** Su ficha: nombre, teléfono, su propia tarifa y el taller. */
+  @Get('me')
+  async me(@CurrentUser() user: AuthUser) {
+    const helper = await this.helpers.forUser(user.id);
+    const shop = await this.shops.findOne(helper.shopId);
+    return {
+      id: helper.id,
+      name: helper.name,
+      phone: helper.phone,
+      payType: helper.payType,
+      payAmount: helper.payAmount,
+      payPct: helper.payPct,
+      shop: { name: shop.name },
+    };
+  }
 
   private async scope(user: AuthUser) {
     const helper = await this.helpers.forUser(user.id);
@@ -102,7 +120,12 @@ export class HelperController {
     const saved = await this.files.uploadToCar(
       user,
       { id, ...(await this.scope(user)) },
-      { kind: dto.kind, logId: dto.logId, visibleToClient: false },
+      {
+        kind: dto.kind,
+        logId: dto.logId,
+        label: dto.label,
+        visibleToClient: false,
+      },
       file,
     );
     return {

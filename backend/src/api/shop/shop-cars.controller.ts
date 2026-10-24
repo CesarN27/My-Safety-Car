@@ -160,6 +160,7 @@ export class ShopCarsController {
           kind: dto.kind,
           logId: dto.logId,
           visibleToClient: dto.visibleToClient === 'true',
+          label: dto.label,
         },
         file,
       ),

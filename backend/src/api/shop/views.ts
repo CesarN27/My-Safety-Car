@@ -114,6 +114,13 @@ export const shopPayment = (p: HelperPayment) => ({
 export const shopSettings = (s: Shop) => ({
   id: s.id,
   name: s.name,
+  owner: s.owner,
+  phone: s.phone,
+  zone: s.zone,
+  address: s.address,
+  lat: s.lat,
+  lng: s.lng,
+  verified: s.verified,
   status: s.status,
   ivaPct: s.ivaPct,
   hours: s.hours,

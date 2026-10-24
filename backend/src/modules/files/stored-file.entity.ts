@@ -70,6 +70,8 @@ export class StoredFile {
   size: number;
   /** El cliente solo ve las fotos del coche que el taller marque; la del ayudante nunca. */
   @Column({ default: false }) visibleToClient: boolean;
+  /** Etiqueta opcional de las fotos de entrada (Tablero, Frente, Atrás…), para la hoja de recepción. */
+  @Column({ type: 'varchar', length: 40, nullable: true }) label: string | null;
   @Column({ type: 'uuid', nullable: true }) uploadedById: string | null;
   @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'uploadedById' })
