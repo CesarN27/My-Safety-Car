@@ -9,6 +9,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { createHash, randomBytes } from 'node:crypto';
 import { IsNull, Repository } from 'typeorm';
 import { normalizePhone } from '../common/phone.js';
+import { ClientsService } from '../modules/clients/clients.service.js';
 import type { User } from '../modules/users/user.entity.js';
 import { UsersService } from '../modules/users/users.service.js';
 import type { RequestCodeDto, VerifyCodeDto } from './dto/auth.dto.js';
@@ -28,6 +29,7 @@ export class AuthService {
 
   constructor(
     private readonly users: UsersService,
+    private readonly clients: ClientsService,
     private readonly otp: OtpProvider,
     private readonly jwt: JwtService,
     config: ConfigService,
@@ -58,6 +60,9 @@ export class AuthService {
     const full = await this.users.findForSession(user.id);
     if (!full || !canOperate(full))
       throw new ForbiddenException('Cuenta desactivada');
+    // Los coches que los talleres capturaron con este teléfono quedan ligados a la cuenta.
+    if (full.role === 'cliente')
+      await this.clients.linkAccount(full.id, normalized);
     return this.issueSession(full);
   }
 

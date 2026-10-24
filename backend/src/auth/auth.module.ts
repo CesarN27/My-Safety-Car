@@ -4,6 +4,7 @@ import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerGuard } from '@nestjs/throttler';
+import { ClientsModule } from '../modules/clients/clients.module.js';
 import { UsersModule } from '../modules/users/users.module.js';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
@@ -16,6 +17,7 @@ import { RefreshToken } from './refresh-token.entity.js';
 @Module({
   imports: [
     UsersModule,
+    ClientsModule,
     TypeOrmModule.forFeature([RefreshToken]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
