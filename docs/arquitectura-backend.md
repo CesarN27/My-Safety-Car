@@ -62,10 +62,10 @@ shops ──< users (taller, ayudante)         clients ──< vehicles
                   └→ 2 Esperando refacción ─┘ (llega la pieza → 3)
 ```
 
-- Las transiciones se validan en el servidor; no se aceptan saltos.
+- Hecho en `modules/cars/car-state.ts` (`checkTransition`, función pura con pruebas). No se aceptan saltos. Además del diagrama se permiten dos regresos: 3 → 2 (falta una pieza en plena reparación) y 4 → 3 (corregir antes de entregar). De Entregado no se sale.
 - Pasar a **4 Listo** exige costos capturados (hay total).
 - Cada cambio escribe una fila en `car_logs` con quién, cuándo, nota y fotos.
-- Pueden cambiar el estado el dueño y el ayudante asignado (solo en sus coches).
+- Pueden cambiar el estado el dueño y el ayudante asignado (solo en sus coches). El ayudante solo lleva a Diagnóstico, Esperando refacción y En reparación; Listo y Entregado son del dueño.
 - Al pasar a **5 Entregado** se llena `deliveredAt` y el QR deja de dar acceso.
 
 ### QR
@@ -78,7 +78,7 @@ shops ──< users (taller, ayudante)         clients ──< vehicles
 
 ### Dinero
 
-Funciones puras en `pricing/`, calculadas en centavos enteros y guardadas como `numeric(12,2)`:
+Funciones puras en `modules/pricing/pricing.ts` (hecho, con pruebas), calculadas en centavos enteros y guardadas como `numeric(12,2)`. Los porcentajes se redondean al centavo (el frontend de hoy redondea a pesos; al conectarlo, el servidor manda):
 
 - `subtotal` = suma de los precios al cliente.
 - `iva` = subtotal × tasa (16 % por defecto, editable por taller; algunos no facturan).
@@ -139,7 +139,7 @@ El INE no se guarda en la app (decisión del PDF: mejor no pedirlo).
 
 1. **Fase 0 (cerrar):** revisión de seguridad de `auth/`, invitación al dueño, estado `baja`, borrado de cuenta.
 2. **Fase 1, esquema:** ~~clientes y vehículos, tabla `files`, `helper_payments`~~ (hecho).
-3. **Fase 1, lógica:** `pricing/` y máquina de estados, con pruebas.
+3. ~~**Fase 1, lógica:** `pricing/` y máquina de estados, con pruebas~~ (hecho).
 4. **Fase 1, API:** pruebas de privacidad → `/shop` (expedientes, costos, bitácora, tablero, ayudantes, reportes) → `/helper` → fotos y firma.
 5. **Conectar el frontend** (reemplazar `store/app.tsx`).
 6. **Fase 2:** `/public/q`, vinculación del QR con verificación por teléfono, `/client`, avisos.

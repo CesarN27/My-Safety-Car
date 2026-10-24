@@ -1,4 +1,5 @@
 import { Car } from '../src/modules/cars/car.entity.js';
+import { computeTotals } from '../src/modules/pricing/pricing.js';
 import { createTestApp, ADMIN_PHONE } from './support/app.js';
 import {
   MONEY_VALUES,
@@ -49,17 +50,24 @@ describe('Privacidad por rol (e2e)', () => {
       ).not.toEqual([]);
     });
 
-    it('el total del fixture es lo único del dinero que no está en la lista de prohibidos', () => {
+    it('los importes del fixture coinciden con pricing/ y solo el total queda permitido', () => {
       expect(MONEY_VALUES).not.toContain(S.total);
-      expect(S.subtotal + S.partCost).toBeGreaterThan(0);
-      // 5802.45 × 1.16 = 6730.842
-      expect(Math.round(S.subtotal * 1.16 * 100) / 100).toBe(S.total);
-      // 5802.45 − 1234.56 − 987.65 − 111.11
-      expect(
-        Math.round(
-          (S.subtotal - S.partCost - S.helperPay - S.expenseCost) * 100,
-        ) / 100,
-      ).toBe(S.profit);
+      const t = computeTotals(
+        [
+          { kind: 'refaccion', cost: S.partCost, price: S.partPrice },
+          { kind: 'mano', cost: 0, price: S.laborPrice },
+          { kind: 'gasto', cost: S.expenseCost, price: 0 },
+        ],
+        {
+          ivaOn: true,
+          helper: { payType: 'fijo', payAmount: S.helperPay, payPct: null },
+        },
+      );
+      expect(t).toMatchObject({
+        subtotal: S.subtotal,
+        total: S.total,
+        profit: S.profit,
+      });
     });
   });
 

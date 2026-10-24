@@ -12,12 +12,14 @@ Preguntas abiertas del proyecto. Cuando se resuelva una, se borra de aquí y se 
 
 ## Datos y esquema
 
+0c. **Regresos en el flujo de estados.** *Valor por defecto:* además del diagrama del PDF se permiten 3 → 2 (en reparación falta una pieza) y 4 → 3 (corregir algo antes de entregar). Ninguno sale de Entregado. Confirmar si hace falta algún otro (por ejemplo, cancelar un expediente).
+0d. **Qué estados cambia el ayudante.** *Valor por defecto:* solo Diagnóstico, Esperando refacción y En reparación, en sus coches. Listo (libera el total al cliente) y Entregado son del dueño. El PDF solo dice que el ayudante "cambia el estado".
+0e. **IVA por taller y cantidad en los conceptos.** `pricing/` ya acepta otra tasa (por ejemplo 8 % en la frontera), pero aún no hay columna `shops.ivaPct`: hoy todos usan 16 %. El PDF también pide "cantidad" en cada concepto de costo y `cost_items` no la tiene; hoy `price` es el importe de la línea. Agregar ambas al hacer los endpoints de costos.
 0b. **Monto del pago al ayudante.** *Valor por defecto:* el monto se congela en `helper_payments` al entregar el coche (estado 5); mientras está abierto se calcula al vuelo. Confirmar si el dueño debe poder pagar antes de entregar (anticipos) o ajustar el monto a mano.
 
 0. **Clientes y vehículos por taller.** Hechos así para que el domicilio y teléfono de un taller no lleguen a otro; el historial entre talleres se arma por `clients.userId` y se agrupa por VIN o placas. Los vehículos sin VIN ni placas quedan como filas separadas (sin restricción de unicidad); decidido.
 
 8. **Taller del ayudante duplicado.** Vive en `users.shopId` y en `helpers.shopId`, y nada impide que difieran. Una restricción `CHECK` ya exige que taller y ayudante tengan taller y que admin y cliente no. Propuesta: derivar el taller del ayudante solo desde `helpers`.
-9. **Dinero en el servidor.** `numeric(12,2)` en la base. ¿Calcular con centavos enteros o con una librería decimal? Evita errores de redondeo en IVA y porcentajes.
 10. **Almacenamiento de archivos.** Disco local detrás de una interfaz `Storage`. Pendiente: cuándo migrar a S3 o R2 y quién respalda los archivos.
 9. *Menor:* los UUID usan `uuid_generate_v4()` (extensión); Postgres 17 trae `gen_random_uuid()` sin extensión. `updatedAt` quedó sin zona horaria, a diferencia de `deliveredAt`.
 
