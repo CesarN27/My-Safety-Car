@@ -20,6 +20,16 @@ describe('computeTotals', () => {
     });
   });
 
+  it('un pago congelado manda sobre la tarifa actual del ayudante', () => {
+    const t = computeTotals(items, {
+      ivaOn: true,
+      helper: fijo,
+      frozenHelperPay: 500,
+    });
+    expect(t.helperPay).toBe(500);
+    expect(t.profit).toBe(3956.78); // 5802.45 − 1234.56 − 500 − 111.11
+  });
+
   it('sin IVA el total es el subtotal', () => {
     const t = computeTotals(items, { ivaOn: false });
     expect(t.iva).toBe(0);
@@ -48,6 +58,20 @@ describe('computeTotals', () => {
     });
     expect(t.total).toBe(0);
     expect(t.profit).toBe(-50);
+  });
+
+  it('multiplica por la cantidad (cost y price son por unidad)', () => {
+    const t = computeTotals(
+      [
+        { kind: 'refaccion', qty: 4.5, cost: 100.1, price: 150.15 },
+        { kind: 'mano', qty: 2, cost: 0, price: 300 },
+      ],
+      { ivaOn: false },
+    );
+    // 4.5 × 150.15 = 675.675 → 675.68; + 600
+    expect(t.subtotal).toBe(1275.68);
+    // 4.5 × 100.1 = 450.45
+    expect(t.parts).toBe(450.45);
   });
 
   it('sin conceptos todo es cero', () => {

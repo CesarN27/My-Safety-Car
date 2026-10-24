@@ -19,12 +19,15 @@ import { Car } from './car.entity.js';
 // Destino de la clave compuesta (carLogId, carId) de los archivos de avance.
 @Index(['id', 'carId'], { unique: true })
 @Check('"state" BETWEEN 0 AND 5')
+@Check('"fromState" BETWEEN 0 AND 5')
 export class CarLog {
   @PrimaryGeneratedColumn('uuid') id: string;
   @Index() @Column('uuid') carId: string;
   @ManyToOne(() => Car, (c) => c.log, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'carId' })
   car?: Relation<Car>;
+  /** Estado anterior; null en el registro de alta y en las notas sin cambio de estado. */
+  @Column({ type: 'smallint', nullable: true }) fromState: CarState | null;
   @Column({ type: 'smallint' }) state: CarState;
   @Column({ type: 'uuid', nullable: true }) authorId: string | null;
   @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })

@@ -20,8 +20,8 @@ import {
  *
  * - Los controles de abajo corren siempre: aseguran que el fixture contiene de verdad los valores
  *   sensibles, para que ninguna prueba de privacidad pase por estar vacía.
- * - El bloque "superficies de API" está escrito antes que los endpoints y se activa quitando
- *   `.skip` cuando existan `/shop`, `/helper`, `/client` y `/public/q`.
+ * - El bloque "superficies de API" recorre `/shop`, `/helper`, `/client` y `/public/q` con una cuenta
+ *   de cada rol. Toda ruta nueva que devuelva datos de un expediente se agrega aquí.
  */
 describe('Privacidad por rol (e2e)', () => {
   let t: Awaited<ReturnType<typeof createTestApp>>;
@@ -71,7 +71,7 @@ describe('Privacidad por rol (e2e)', () => {
     });
   });
 
-  describe.skip('superficies de API (se activa con los endpoints)', () => {
+  describe('superficies de API', () => {
     const tokens: Record<string, string> = {};
     const get = (path: string, who: string) =>
       t.http().get(path).set(t.bearer(tokens[who]!));

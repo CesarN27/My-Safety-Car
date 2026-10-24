@@ -16,20 +16,23 @@ El PDF recomienda Flutter + Supabase, y su argumento principal es el RLS de Post
 
 ## 3. Módulos
 
+Dos capas: **dominio** (`src/modules/`, la lógica y las entidades) y **superficies** (`src/api/`, una carpeta por audiencia con sus controladores, DTOs y vistas). Las superficies no tienen lógica propia: arman el filtro de acceso a partir de la sesión, llaman al dominio y dan forma a la respuesta.
+
 ```
-modules/
-  auth/          (hecho)    OTP simulado, JWT de acceso + refresco rotado, guards
-  users/         (hecho)
-  shops/         (hecho, ampliar)  alta por admin; falta invitación al dueño, estado baja, perfil público
-  clients/       (hecho)    clientes y vehículos por taller
-  cars/          (entidades hechas) expedientes, costos, bitácora; faltan servicios y controladores
-  helpers/       (entidad hecha, ampliar)  asignación y pagos por coche
-  pricing/       pendiente  funciones puras de dinero
-  files/         pendiente  interfaz Storage (disco local → S3/R2) y tabla `files`
-  public/        pendiente  GET /public/q/:token, sin sesión
-  notifications/ después    interfaz Notifier (push / WhatsApp)
-  reports/       después    ingresos, gastos y ganancia por semana o mes
-  map/           fase 3     búsqueda por radio
+src/auth/            (hecho)  OTP simulado, JWT de acceso + refresco rotado, guards
+src/modules/
+  users/             (hecho)
+  shops/             (hecho)  alta por admin, ajustes del taller; falta invitación al dueño, estado baja, perfil público
+  clients/           (hecho)  clientes y vehículos por taller, vínculo con la cuenta, búsqueda de vehículos
+  cars/              (hecho)  CarsService: alta, edición, costos, etapas, notas, QR, reportes; car-state.ts
+  helpers/           (hecho)  alta con cuenta, tarifa, desactivar, pagos congelados y resumen semanal
+  pricing/           (hecho)  funciones puras de dinero
+  files/             (tabla)  falta la interfaz Storage y la subida
+  notifications/     después  interfaz Notifier (push / WhatsApp)
+  map/               fase 3   búsqueda por radio
+src/api/
+  shop/  helper/  client/  public/  admin/    (hecho) una superficie por audiencia
+  common/                                     DTOs y vistas compartidas, shopOf(user)
 ```
 
 ### Modelo de datos
@@ -104,7 +107,19 @@ Una sola tabla `files` (hecha) reemplaza `car_photos`, `car_logs.photos`, `cars.
 | `/client/...` | cliente | Su coche; el total solo desde el estado 4; fotos marcadas como visibles; sus propios datos. |
 | `/public/q/:token` | sin sesión | Estado actual del coche. |
 
-Cada superficie tiene sus clases de respuesta (`CarForShop`, `CarForHelper`, `CarForClient`) y un mapper explícito. Nunca se serializa la entidad directamente: un campo nuevo en la entidad no puede aparecer solo en una respuesta de cliente.
+Cada superficie tiene su archivo `views.ts` con funciones que arman la respuesta campo por campo (`shopCarDetail`, `helperCarDetail`, `clientCarDetail`…). Nunca se serializa la entidad directamente: una columna nueva no puede aparecer sola en una respuesta de cliente.
+
+### Endpoints (hechos)
+
+| Superficie | Rutas |
+|---|---|
+| `/shop` (rol taller) | `GET/POST /shop/cars` (tablero: sin filtro, los que siguen en el taller; `?state=` una etapa), `GET/PATCH /shop/cars/:id`, `PUT /shop/cars/:id/costs`, `POST /shop/cars/:id/state`, `POST /shop/cars/:id/notes`, `POST /shop/cars/:id/qr` (regenera el QR), `GET /shop/vehicles?q=` (placas, VIN o teléfono), `GET /shop/vehicles/:id` (historial de visitas), `GET /shop/reports?from=&to=`, `GET/POST /shop/helpers`, `PATCH /shop/helpers/:id` (tarifa, nombre, `active`), `GET /shop/payments?helperId=&pending=`, `POST /shop/payments/:id/pay`, `GET/PATCH /shop/settings` (IVA, horario, especialidades) |
+| `/helper` (rol ayudante) | `GET /helper/cars`, `GET /helper/cars/:id`, `POST /helper/cars/:id/state`, `POST /helper/cars/:id/notes`, `GET /helper/payments` (semana, pendiente, estimado en curso) |
+| `/client` (rol cliente) | `GET /client/cars` (en curso y entregados, de cualquier taller), `GET /client/cars/:id`, `POST /client/cars/link` (escaneo del QR: solo si el teléfono de la cuenta es el del cliente) |
+| `/public` (sin sesión) | `GET /public/q/:token` (etapa y línea de tiempo; 30 por minuto por IP) |
+| `/admin` (rol admin) | `/admin/shops` (alta, lista, estado) y `GET /admin/stats` (solo conteos) |
+
+Al crear un expediente, el cliente se busca por teléfono dentro del taller (o se crea) y, si ese teléfono ya tiene cuenta de cliente, queda ligado en el momento. El vehículo es nuevo (`vehicle`) o uno ya registrado (`vehicleId`, visita de regreso); si cambió de dueño, pasa al cliente capturado.
 
 Matriz de privacidad (del PDF):
 
@@ -130,7 +145,8 @@ El INE no se guarda en la app (decisión del PDF: mejor no pedirlo).
 
 ## 6. Pruebas
 
-- **Privacidad por rol:** `test/support/privacy.ts` recorre el JSON de cada respuesta de `/helper`, `/client` y `/public/q` y falla si aparece una clave prohibida o un **valor sentinela** (importes y textos únicos sembrados por `test/support/fixture.ts`). Mirar valores atrapa filtraciones con otro nombre de campo. Ya hecho: el detector (con pruebas unitarias) y el fixture con dos talleres, dos ayudantes, clientes y coches en distintos estados. `test/privacy.e2e-spec.ts` tiene los controles activos y las pruebas de cada superficie escritas pero con `describe.skip`: se activan al crear los endpoints.
+- **Privacidad por rol:** `test/support/privacy.ts` recorre el JSON de cada respuesta de `/helper`, `/client` y `/public/q` y falla si aparece una clave prohibida o un **valor sentinela** (importes y textos únicos sembrados por `test/support/fixture.ts`). Mirar valores atrapa filtraciones con otro nombre de campo. Ya hecho: el detector (con pruebas unitarias) y el fixture con dos talleres, dos ayudantes, clientes y coches en distintos estados. `test/privacy.e2e-spec.ts` recorre todas las superficies con una cuenta de cada rol. Se comprobó que detecta una filtración real metiendo a propósito la ganancia en la vista del ayudante (bajo otro nombre) y el total en la del cliente antes de Listo.
+- **Flujo:** `test/shop-flow.e2e-spec.ts` cubre alta, visitas de regreso, validación, costos con cantidad e IVA del taller, etapas, entrega con pago congelado, reportes, pagos, ayudantes (alta, permisos, desactivación), QR (regenerar, vincular), escrituras entre talleres y el panel del admin. Incluye altas simultáneas (folios únicos, un solo cliente).
 - **Aislamiento:** dos talleres sembrados; cada superficie debe devolver 404 para datos del otro.
 - **Esquema:** referencias entre talleres rechazadas por la base (ya hecho).
 - **Dinero y estados:** pruebas unitarias de `pricing/` y de la máquina de estados.
@@ -140,8 +156,8 @@ El INE no se guarda en la app (decisión del PDF: mejor no pedirlo).
 1. **Fase 0 (cerrar):** revisión de seguridad de `auth/`, invitación al dueño, estado `baja`, borrado de cuenta.
 2. **Fase 1, esquema:** ~~clientes y vehículos, tabla `files`, `helper_payments`~~ (hecho).
 3. ~~**Fase 1, lógica:** `pricing/` y máquina de estados, con pruebas~~ (hecho).
-4. **Fase 1, API:** pruebas de privacidad → `/shop` (expedientes, costos, bitácora, tablero, ayudantes, reportes) → `/helper` → fotos y firma.
+4. **Fase 1, API:** ~~pruebas de privacidad, `/shop`, `/helper`~~ (hecho) → fotos y firma (interfaz `Storage`, subida, descarga con autorización).
 5. **Conectar el frontend** (reemplazar `store/app.tsx`).
-6. **Fase 2:** `/public/q`, vinculación del QR con verificación por teléfono, `/client`, avisos.
+6. **Fase 2:** ~~`/public/q`, vinculación del QR, `/client`~~ (hecho) → avisos (push / WhatsApp).
 7. **Fase 3:** mapa por radio, perfil público, insignia de verificado, aprobación de presupuesto.
 8. **Fase 4:** suscripción, recordatorios, inventario, calificaciones, modo sin internet (por eso los IDs deben poder generarse en el cliente y las escrituras ser idempotentes).

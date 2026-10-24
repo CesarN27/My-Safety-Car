@@ -11,9 +11,11 @@ export const DEFAULT_IVA_PCT = 16;
 
 export interface PricedItem {
   kind: CostKind;
-  /** Lo que le cuesta al taller, en pesos. */
+  /** Cantidad; 1 si no se indica. */
+  qty?: number;
+  /** Lo que le cuesta al taller por unidad, en pesos. */
   cost: number;
-  /** Lo que se le cobra al cliente, en pesos. */
+  /** Lo que se le cobra al cliente por unidad, en pesos. */
   price: number;
 }
 
@@ -49,8 +51,16 @@ function pctOf(cents: number, pct: number) {
   return Math.round((cents * Math.round(pct * 100)) / 10_000);
 }
 
-const sumCents = (xs: readonly number[]) =>
-  xs.reduce((acc, x) => acc + toCents(x), 0);
+/** Importe de una línea: unitario × cantidad, redondeado al centavo. */
+function lineCents(unit: number, qty = 1) {
+  // La cantidad tiene a lo más dos decimales: se pasa a centésimas enteras igual que los porcentajes.
+  return Math.round((toCents(unit) * Math.round(qty * 100)) / 100);
+}
+
+const sumLines = (
+  items: readonly PricedItem[],
+  pick: (i: PricedItem) => number,
+) => items.reduce((acc, i) => acc + lineCents(pick(i), i.qty), 0);
 
 /** Lo que se le debe al ayudante por este coche: fijo, o porcentaje de la mano de obra. */
 export function helperPayCents(
@@ -59,28 +69,41 @@ export function helperPayCents(
 ): number {
   if (!rate) return 0;
   if (rate.payType === 'fijo') return toCents(rate.payAmount ?? 0);
-  const labor = sumCents(
-    items.filter((i) => i.kind === 'mano').map((i) => i.price),
+  const labor = sumLines(
+    items.filter((i) => i.kind === 'mano'),
+    (i) => i.price,
   );
   return pctOf(labor, rate.payPct ?? 0);
 }
 
 export function computeTotals(
   items: readonly PricedItem[],
-  opts: { ivaOn: boolean; ivaPct?: number; helper?: HelperRate | null },
+  opts: {
+    ivaOn: boolean;
+    ivaPct?: number;
+    helper?: HelperRate | null;
+    /** Pago ya congelado (coche entregado): se usa en lugar de la tarifa actual del ayudante. */
+    frozenHelperPay?: number | null;
+  },
 ): Totals {
   // Los gastos no se le cobran al cliente aunque traigan precio.
-  const subtotal = sumCents(
-    items.filter((i) => i.kind !== 'gasto').map((i) => i.price),
+  const subtotal = sumLines(
+    items.filter((i) => i.kind !== 'gasto'),
+    (i) => i.price,
   );
   const iva = opts.ivaOn ? pctOf(subtotal, opts.ivaPct ?? DEFAULT_IVA_PCT) : 0;
-  const parts = sumCents(
-    items.filter((i) => i.kind === 'refaccion').map((i) => i.cost),
+  const parts = sumLines(
+    items.filter((i) => i.kind === 'refaccion'),
+    (i) => i.cost,
   );
-  const expenses = sumCents(
-    items.filter((i) => i.kind === 'gasto').map((i) => i.cost),
+  const expenses = sumLines(
+    items.filter((i) => i.kind === 'gasto'),
+    (i) => i.cost,
   );
-  const helperPay = helperPayCents(items, opts.helper ?? null);
+  const helperPay =
+    opts.frozenHelperPay != null
+      ? toCents(opts.frozenHelperPay)
+      : helperPayCents(items, opts.helper ?? null);
   return {
     subtotal: toPesos(subtotal),
     iva: toPesos(iva),

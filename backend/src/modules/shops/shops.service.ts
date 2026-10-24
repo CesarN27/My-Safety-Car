@@ -63,6 +63,15 @@ export class ShopsService {
     });
   }
 
+  /** Ajustes que el dueño cambia de su propio taller. */
+  async updateSettings(
+    id: string,
+    changes: Partial<Pick<Shop, 'ivaPct' | 'hours' | 'specialties'>>,
+  ) {
+    if (Object.keys(changes).length) await this.shops.update({ id }, changes);
+    return this.findOne(id);
+  }
+
   async setStatus(id: string, status: ShopStatus) {
     const shop = await this.findOne(id);
     shop.status = status;

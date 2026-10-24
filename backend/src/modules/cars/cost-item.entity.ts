@@ -16,6 +16,7 @@ import { Car } from './car.entity.js';
 @Entity('cost_items')
 @Check('"cost" >= 0')
 @Check('"price" >= 0')
+@Check('"qty" > 0')
 export class CostItem {
   @PrimaryGeneratedColumn('uuid') id: string;
   @Index() @Column('uuid') carId: string;
@@ -24,7 +25,17 @@ export class CostItem {
   car?: Relation<Car>;
   @Column({ type: 'enum', enum: COST_KINDS }) kind: CostKind;
   @Column() desc: string;
-  /** Lo que le cuesta al taller (refacciones y gastos). */
+  /** Cantidad (litros, piezas, horas…); cost y price son por unidad. */
+  @Column('numeric', {
+    precision: 10,
+    scale: 2,
+    default: 1,
+    transformer: numeric,
+  })
+  qty: number;
+  /** Orden en que el taller capturó los conceptos. */
+  @Column({ type: 'smallint', default: 0 }) position: number;
+  /** Lo que le cuesta al taller por unidad (refacciones y gastos). */
   @Column('numeric', {
     precision: 12,
     scale: 2,
@@ -32,7 +43,7 @@ export class CostItem {
     transformer: numeric,
   })
   cost: number;
-  /** Lo que se le cobra al cliente (refacciones y mano de obra). */
+  /** Lo que se le cobra al cliente por unidad (refacciones y mano de obra). */
   @Column('numeric', {
     precision: 12,
     scale: 2,
