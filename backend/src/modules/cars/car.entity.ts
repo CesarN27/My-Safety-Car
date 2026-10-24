@@ -30,6 +30,8 @@ export interface Damage {
 @Entity('cars')
 @Index(['shopId', 'folio'], { unique: true })
 @Index(['shopId', 'state'])
+// Destino de las claves compuestas (id, shopId) de archivos y pagos.
+@Index(['id', 'shopId'], { unique: true })
 @Check('"state" BETWEEN 0 AND 5')
 @Check('"fuel" BETWEEN 0 AND 1')
 export class Car {
@@ -80,8 +82,6 @@ export class Car {
   /** Nivel de gasolina (0–1). */
   @Column('real', { default: 0 }) fuel: number;
   @Column('jsonb', { default: () => "'[]'" }) damages: Damage[];
-  /** Ruta de la firma del cliente en el almacenamiento; null si no ha firmado. */
-  @Column({ type: 'varchar', nullable: true }) signaturePath: string | null;
   @Column({ default: false }) ivaOn: boolean;
 
   @OneToMany(() => CostItem, (c) => c.car) costs?: CostItem[];

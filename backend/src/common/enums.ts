@@ -15,3 +15,19 @@ export type CarState = 0 | 1 | 2 | 3 | 4 | 5;
 
 /** 0 bien · 1 dañado · 2 no aplica */
 export type InspState = 0 | 1 | 2;
+
+/**
+ * Tipo de archivo, que decide a qué pertenece:
+ * entrada / pieza_danada / pieza_nueva / firma → coche · avance → entrada de la bitácora ·
+ * ayudante → foto del ayudante · taller → foto del perfil público del taller.
+ */
+export const FILE_KINDS = [
+  'entrada',
+  'pieza_danada',
+  'pieza_nueva',
+  'firma',
+  'avance',
+  'ayudante',
+  'taller',
+] as const;
+export type FileKind = (typeof FILE_KINDS)[number];

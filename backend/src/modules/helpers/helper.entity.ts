@@ -15,6 +15,7 @@ import { Shop } from '../shops/shop.entity.js';
 import { User } from '../users/user.entity.js';
 
 @Entity('helpers')
+@Index(['id', 'shopId'], { unique: true })
 @Check(
   '("payType" = \'fijo\' AND "payAmount" IS NOT NULL AND "payAmount" >= 0) OR ("payType" = \'porcentaje\' AND "payPct" IS NOT NULL AND "payPct" BETWEEN 0 AND 100)',
 )
@@ -31,7 +32,6 @@ export class Helper {
   user?: Relation<User | null>;
   @Column() name: string;
   @Column() phone: string;
-  @Column({ type: 'varchar', nullable: true }) photo: string | null;
   @Column({ type: 'enum', enum: PAY_TYPES }) payType: PayType;
   /** Monto fijo (payType = fijo). */
   @Column('numeric', {
@@ -49,6 +49,5 @@ export class Helper {
     transformer: numeric,
   })
   payPct: number | null;
-  @Column({ default: false }) paid: boolean;
   @CreateDateColumn() createdAt: Date;
 }

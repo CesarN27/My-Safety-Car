@@ -72,7 +72,8 @@ shops ──< users (taller, ayudante)         clients ──< vehicles
 
 - El token es del **servicio** (expediente), aleatorio y revocable. No sirve en la siguiente visita.
 - Da acceso solo mientras el expediente está abierto. Después queda en el historial del cliente que lo escaneó.
-- Si quien escanea no es el cliente registrado, se pide confirmar con un código al teléfono que el cliente dio en el taller.
+- **Vinculación automática:** al verificar su teléfono con el código, la cuenta del cliente queda ligada a todos los `clients` (de cualquier taller) capturados con ese número (`ClientsService.linkAccount`, ya hecho). Si quien escanea no es el cliente registrado, no coincide el teléfono y no se liga nada.
+- Cuando un taller capture un cliente nuevo cuyo teléfono ya tiene cuenta, el servicio de `clients` debe ligarlo en el momento (hoy solo se liga al iniciar sesión). **Todos los teléfonos se guardan normalizados** (`normalizePhone`, prefijo `52`); si no, el vínculo no coincide.
 - `GET /public/q/:token` no exige sesión y devuelve solo el estado actual, con límite de peticiones.
 
 ### Dinero
@@ -87,11 +88,11 @@ Funciones puras en `pricing/`, calculadas en centavos enteros y guardadas como `
 
 ### Pagos a ayudantes
 
-Por coche, en una tabla `helper_payments` (expediente, ayudante, monto, pagado, fecha). "Mis pagos" de la semana se deriva de ahí. Reemplaza el booleano `helpers.paid`.
+Por coche, en `helper_payments` (taller, expediente, ayudante, monto, `paidAt`; hecho). Una fila por ayudante y coche. El monto se congela al entregar el coche (estado 5): mientras está abierto se calcula al vuelo con `pricing/`, y cambiar después la tarifa del ayudante no mueve lo ya entregado. `paidAt` null significa pendiente. "Mis pagos" de la semana se deriva de ahí. No se puede borrar un ayudante con historial de pagos.
 
 ### Archivos
 
-Una sola tabla `files` (dueño, tipo: entrada / pieza dañada / pieza nueva / firma / avance, `visibleToClient`) detrás de una interfaz `Storage`. Disco local al inicio. Las descargas pasan por autorización o URL firmada de vida corta; nunca se sirven como estáticos públicos.
+Una sola tabla `files` (hecha) reemplaza `car_photos`, `car_logs.photos`, `cars.signaturePath` y `helpers.photo`. El tipo (`kind`) decide a qué pertenece y un `CHECK` lo obliga: entrada, pieza dañada, pieza nueva y firma → coche; avance → entrada de la bitácora; ayudante → ayudante; taller → perfil del taller. Hay una sola firma por expediente. Las referencias son compuestas (`(carId, shopId)`, `(carLogId, carId)`, `(helperId, shopId)`), así que la base rechaza archivos que mezclen talleres o coches. `visibleToClient` es falso por defecto. La clave en el almacenamiento la genera el servidor. El contenido vive detrás de una interfaz `Storage` (pendiente). Disco local al inicio. Las descargas pasan por autorización o URL firmada de vida corta; nunca se sirven como estáticos públicos.
 
 ## 4. Superficies de API por audiencia
 
@@ -129,7 +130,7 @@ El INE no se guarda en la app (decisión del PDF: mejor no pedirlo).
 
 ## 6. Pruebas
 
-- **Privacidad por rol:** un helper de e2e recorre el JSON de cada respuesta de `/helper` y `/client` y falla si aparece cualquier clave de costo, ganancia, proveedor o gasto. Se escribe **antes** de los endpoints.
+- **Privacidad por rol:** `test/support/privacy.ts` recorre el JSON de cada respuesta de `/helper`, `/client` y `/public/q` y falla si aparece una clave prohibida o un **valor sentinela** (importes y textos únicos sembrados por `test/support/fixture.ts`). Mirar valores atrapa filtraciones con otro nombre de campo. Ya hecho: el detector (con pruebas unitarias) y el fixture con dos talleres, dos ayudantes, clientes y coches en distintos estados. `test/privacy.e2e-spec.ts` tiene los controles activos y las pruebas de cada superficie escritas pero con `describe.skip`: se activan al crear los endpoints.
 - **Aislamiento:** dos talleres sembrados; cada superficie debe devolver 404 para datos del otro.
 - **Esquema:** referencias entre talleres rechazadas por la base (ya hecho).
 - **Dinero y estados:** pruebas unitarias de `pricing/` y de la máquina de estados.
@@ -137,7 +138,7 @@ El INE no se guarda en la app (decisión del PDF: mejor no pedirlo).
 ## 7. Orden de construcción
 
 1. **Fase 0 (cerrar):** revisión de seguridad de `auth/`, invitación al dueño, estado `baja`, borrado de cuenta.
-2. **Fase 1, esquema:** ~~clientes y vehículos~~ (hecho), tabla `files`, `helper_payments`.
+2. **Fase 1, esquema:** ~~clientes y vehículos, tabla `files`, `helper_payments`~~ (hecho).
 3. **Fase 1, lógica:** `pricing/` y máquina de estados, con pruebas.
 4. **Fase 1, API:** pruebas de privacidad → `/shop` (expedientes, costos, bitácora, tablero, ayudantes, reportes) → `/helper` → fotos y firma.
 5. **Conectar el frontend** (reemplazar `store/app.tsx`).

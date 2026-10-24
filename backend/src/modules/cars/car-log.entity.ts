@@ -13,9 +13,11 @@ import type { CarState } from '../../common/enums.js';
 import { User } from '../users/user.entity.js';
 import { Car } from './car.entity.js';
 
-/** Bitácora de avance: cada cambio de estado con nota y fotos. */
+/** Bitácora de avance: cada cambio de estado con nota; sus fotos van en `files` (kind avance). */
 @Entity('car_logs')
 @Index(['carId', 'at'])
+// Destino de la clave compuesta (carLogId, carId) de los archivos de avance.
+@Index(['id', 'carId'], { unique: true })
 @Check('"state" BETWEEN 0 AND 5')
 export class CarLog {
   @PrimaryGeneratedColumn('uuid') id: string;
@@ -31,7 +33,6 @@ export class CarLog {
   /** Nombre al momento del registro, para que el historial no cambie si se renombra. */
   @Column() authorName: string;
   @Column({ type: 'text', nullable: true }) note: string | null;
-  @Column('text', { array: true, default: () => "'{}'" }) photos: string[];
   @Column({ default: true }) visibleToClient: boolean;
   @CreateDateColumn() at: Date;
 }
