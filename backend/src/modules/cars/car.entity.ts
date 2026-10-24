@@ -12,9 +12,10 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import type { CarState, InspState } from '../../common/enums.js';
+import { Client } from '../clients/client.entity.js';
+import { Vehicle } from '../clients/vehicle.entity.js';
 import { Helper } from '../helpers/helper.entity.js';
 import { Shop } from '../shops/shop.entity.js';
-import { User } from '../users/user.entity.js';
 import { CarLog } from './car-log.entity.js';
 import { CostItem } from './cost-item.entity.js';
 
@@ -46,23 +47,23 @@ export class Car {
   @Column({ type: 'timestamptz', nullable: true }) deliveredAt: Date | null;
   @UpdateDateColumn() updatedAt: Date;
 
-  @Column() brand: string;
-  @Column() model: string;
-  @Column() year: string;
-  @Column() color: string;
-  @Column() plates: string;
-  @Column() vin: string;
+  @Index() @Column('uuid') vehicleId: string;
+  @ManyToOne(() => Vehicle, { onDelete: 'RESTRICT' })
+  @JoinColumn([
+    { name: 'vehicleId', referencedColumnName: 'id' },
+    { name: 'shopId', referencedColumnName: 'shopId' },
+  ])
+  vehicle?: Relation<Vehicle>;
+  /** Dueño al momento del servicio; se conserva aunque el vehículo cambie de dueño después. */
+  @Index() @Column('uuid') clientId: string;
+  @ManyToOne(() => Client, { onDelete: 'RESTRICT' })
+  @JoinColumn([
+    { name: 'clientId', referencedColumnName: 'id' },
+    { name: 'shopId', referencedColumnName: 'shopId' },
+  ])
+  client?: Relation<Client>;
+  /** Kilometraje al ingreso. */
   @Column() km: string;
-
-  @Column() clientName: string;
-  @Column() clientPhone: string;
-  @Column() clientAddress: string;
-  /** Cuenta del cliente, se llena cuando escanea el QR. */
-  @Index() @Column({ type: 'uuid', nullable: true }) clientUserId:
-    string | null;
-  @ManyToOne(() => User, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'clientUserId' })
-  clientUser?: Relation<User | null>;
 
   @Column({ type: 'smallint', default: 0 }) state: CarState;
   @Column({ type: 'uuid', nullable: true }) helperId: string | null;

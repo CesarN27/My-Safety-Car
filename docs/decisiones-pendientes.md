@@ -4,15 +4,17 @@ Preguntas abiertas del proyecto. Cuando se resuelva una, se borra de aquí y se 
 
 ## Negocio y producto
 
-1. **Pagos a ayudantes.** Hoy `helpers.paid` es un booleano y no guarda monto, fecha ni coche. *Decisión actual: dejarlo así.* Pendiente: ¿pago por coche (tabla `helper_payments` ligada al coche), por periodo (semana o quincena), o ambos? Afecta la pantalla "Mis pagos" del ayudante.
+1. **Pagos a ayudantes.** *Resuelto por el PDF: pago por coche* (`helper_payments`, ver `arquitectura-backend.md`). Pendiente de implementar; se borra de aquí al hacerlo.
 2. **Canal del login por teléfono.** ¿Código por WhatsApp (Twilio, requiere WhatsApp Business y plantillas aprobadas), por SMS, u otro? Mientras tanto el login se simula detrás de una interfaz.
 3. **Formato del folio.** Es único por taller (`shopId, folio`). Falta definir cómo se genera: consecutivo por taller, con prefijo o año, y si puede reiniciarse.
-4. **Qué pasa al escanear el QR sin cuenta.** Hoy el frontend entra como cliente automáticamente. En el backend, ¿se exige verificar el teléfono antes de ligar el coche, o se permite una sesión de invitado? También: ¿el token del QR expira, es de un solo uso, o solo se puede revocar?
+4. **QR sin cuenta.** *Adoptado del PDF:* el QR abre una página web con el estado (`/public/q/:token`), ligar el coche exige verificar el teléfono, y el token caduca al entregar y se puede revocar. Pendiente: si se vincula automáticamente al cliente cuyo teléfono verificado coincide con `clients.phone`, o solo tras escanear.
 
 5. **Taller pausado, invitado y acceso.** Hoy un taller `pausado` bloquea a su dueño y a sus ayudantes (login y sesiones abiertas); `invitado` y `activo` pueden entrar. Falta confirmar si "invitado" debería poder operar antes de que el admin lo active, o si pausar solo debe quitarlo del mapa sin bloquear el acceso.
 6. **Cuenta del dueño del taller.** Al dar de alta un taller se crea su cuenta con el teléfono del taller. Falta definir si el dueño tiene un teléfono propio distinto, y cómo se agregan más cuentas de taller (encargados) o más admins (hoy solo el inicial desde `ADMIN_PHONE`).
 
 ## Datos y esquema
+
+0. **Clientes y vehículos por taller.** Hechos así para que el domicilio y teléfono de un taller no lleguen a otro; el historial entre talleres se arma por `clients.userId` y se agrupa por VIN o placas. Pendiente confirmar: ¿los vehículos sin VIN ni placas (vacíos) deben fusionarse o quedar como filas separadas? Hoy no hay restricción de unicidad en vehículos.
 
 7. **Fotos en dos lugares.** `car_logs.photos` (arreglo) y la tabla `car_photos`. Propuesta: una sola tabla `files` (coche, bitácora, ayudante, firma). Decidir antes de implementar la subida de archivos.
 8. **Taller del ayudante duplicado.** Vive en `users.shopId` y en `helpers.shopId`, y nada impide que difieran. Una restricción `CHECK` ya exige que taller y ayudante tengan taller y que admin y cliente no. Propuesta: derivar el taller del ayudante solo desde `helpers`.

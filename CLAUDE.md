@@ -7,9 +7,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 Tecnocar-Pro: app para talleres mecánicos con cuatro roles (admin master, taller, ayudante, cliente). El repo está dividido en dos carpetas:
 
 - `frontend/` — app Expo (SDK 57, Expo Router, TypeScript, React Compiler). Funciona hoy.
-- `backend/` — API NestJS 12 (ESM, `"type": "module"`, imports con `.js`) + TypeORM + PostgreSQL 17 en Docker. Hecho: esqueleto, esquema (`shops`, `users`, `helpers`, `cars`, `cost_items`, `car_logs`, `car_photos`) con restricciones `CHECK` e índices (2 migraciones), arranque endurecido (`helmet`, `ValidationPipe` con whitelist, `.env` obligatorio y validado, Postgres solo en `127.0.0.1`). Auth hecha: login por teléfono con código simulado (`OtpProvider`), JWT de acceso + refresco rotado, guards globales (throttler → sesión → rol) y alta de talleres por el admin (`/admin/shops`). Falta, en orden: endpoints de expedientes/costos/bitácora (respuesta distinta por rol) → fotos y firma (disco local detrás de una interfaz `Storage`) → conectar el frontend → login real por teléfono (canal sin definir; hoy `DevOtpProvider`).
+- `backend/` — API NestJS 12 (ESM, `"type": "module"`, imports con `.js`) + TypeORM + PostgreSQL 17 en Docker. Hecho: esqueleto, esquema (`shops`, `users`, `helpers`, `clients`, `vehicles`, `cars`, `cost_items`, `car_logs`, `car_photos`) con restricciones `CHECK` e índices (4 migraciones), arranque endurecido (`helmet`, `ValidationPipe` con whitelist, `.env` obligatorio y validado, Postgres solo en `127.0.0.1`). Auth hecha: login por teléfono con código simulado (`OtpProvider`), JWT de acceso + refresco rotado, guards globales (throttler → sesión → rol) y alta de talleres por el admin (`/admin/shops`). Falta, en orden: endpoints de expedientes/costos/bitácora (respuesta distinta por rol) → fotos y firma (disco local detrás de una interfaz `Storage`) → conectar el frontend → login real por teléfono (canal sin definir; hoy `DevOtpProvider`).
 
-Las preguntas abiertas viven en `docs/decisiones-pendientes.md`: si una decisión queda sin resolver, usa un valor por defecto razonable y anótala ahí. Los temas de seguridad se atienden con la skill `claude-security:claude-security`.
+La arquitectura planeada del backend (módulos, superficies de API por rol, fases) está en `docs/arquitectura-backend.md`; el PDF de requerimientos es `docs/especificacion-app-taller.pdf` (César, 7 oct 2026). Las preguntas abiertas viven en `docs/decisiones-pendientes.md`: si una decisión queda sin resolver, usa un valor por defecto razonable y anótala ahí. Los temas de seguridad se atienden con la skill `claude-security:claude-security`.
 
 La documentación y los textos de UI están en español; mantenlo así.
 
@@ -47,6 +47,7 @@ Detalles no obvios del backend:
 - `synchronize` está siempre apagado: el esquema cambia solo con migraciones. Los `numeric` de Postgres se convierten a `number` con `common/numeric.transformer.ts`.
 - Toda ruta exige sesión salvo las marcadas `@Public()`; los permisos por rol van con `@Roles(...)`. El guard lee rol y taller de la base en cada petición (no del JWT), por eso pausar un taller o desactivar una cuenta corta el acceso al instante. Cualquier ruta nueva con datos de un taller debe filtrar por `user.shopId`.
 - Las e2e se compilan con `tsc` (`tsconfig.e2e.json`), no con esbuild/swc: hacen falta los metadatos de decoradores, y SWC no carga en esta máquina por permisos de `/home/miguel`. Solo corren contra una base cuyo nombre termina en `_test` (`dbConfig` lo exige y recrea el esquema).
+- `clients` y `vehicles` son por taller (no globales) y `cars`/`vehicles` los referencian con claves foráneas compuestas `(id, shopId)`: la base rechaza mezclar talleres. El historial del cliente entre talleres se arma por `clients.userId`.
 - La configuración de base de datos vive en `src/database/db-config.ts` y la comparten Nest y la CLI.
 
 ## Arquitectura del frontend
