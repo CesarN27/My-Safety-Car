@@ -1,6 +1,9 @@
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
+  ArrayMinSize,
+  IsArray,
+  Matches,
   IsBoolean,
   IsIn,
   IsInt,
@@ -16,6 +19,7 @@ import {
   type ValidationOptions,
 } from 'class-validator';
 import { INSPECTION_POINTS } from '../../common/inspection.js';
+import { STROKE_PATTERN } from '../../common/signature.js';
 
 /** Inspección: solo los 15 puntos conocidos, con 0 (bien), 1 (dañado) o 2 (no aplica). */
 export function IsInspection(options?: ValidationOptions) {
@@ -51,6 +55,21 @@ export class DamageDto {
   @IsIn(['arriba', 'frente', 'atras', 'izquierda', 'derecha'])
   view?: 'arriba' | 'frente' | 'atras' | 'izquierda' | 'derecha';
   @IsOptional() @IsIn(['golpe', 'rayon']) type?: 'golpe' | 'rayon';
+}
+
+export class SignatureDto {
+  @IsInt() @Min(1) @Max(4000) w: number;
+  @IsInt() @Min(1) @Max(4000) h: number;
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(300)
+  @IsString({ each: true })
+  @MaxLength(50_000, { each: true })
+  @Matches(STROKE_PATTERN, {
+    each: true,
+    message: 'strokes solo acepta trazos "M x,y L x,y …"',
+  })
+  strokes: string[];
 }
 
 export class LogDto {

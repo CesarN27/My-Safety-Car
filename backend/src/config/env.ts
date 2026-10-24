@@ -6,6 +6,7 @@ const REQUIRED = [
   'DB_NAME',
   'JWT_SECRET',
   'DEV_OTP_CODE',
+  'STORAGE_DIR',
 ] as const;
 
 /** Falla al arrancar si falta o es débil alguna variable: nunca se usan valores por defecto. */

@@ -21,7 +21,7 @@ export const helperCarSummary = (car: Car) => ({
   clientName: car.client!.name,
 });
 
-export const helperCarDetail = ({ car, log }: CarBundle) => ({
+export const helperCarDetail = ({ car, log, files }: CarBundle) => ({
   ...helperCarSummary(car),
   km: car.km,
   fuel: car.fuel,
@@ -29,6 +29,15 @@ export const helperCarDetail = ({ car, log }: CarBundle) => ({
   damages: car.damages,
   description: car.description,
   log: fullLog(log),
+  // El ayudante ve todas las fotos del coche (PDF), pero no decide cuáles ve el cliente.
+  files: files.map((f) => ({
+    id: f.id,
+    kind: f.kind,
+    logId: f.carLogId,
+    mimeType: f.mimeType,
+    size: f.size,
+    createdAt: f.createdAt,
+  })),
   allowedNext: allowedNext(car.state).filter((s) => HELPER_TARGETS.includes(s)),
 });
 

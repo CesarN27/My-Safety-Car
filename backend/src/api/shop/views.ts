@@ -7,7 +7,7 @@ import type { HelperPayment } from '../../modules/helpers/helper-payment.entity.
 import type { Helper } from '../../modules/helpers/helper.entity.js';
 import type { Totals } from '../../modules/pricing/pricing.js';
 import type { Shop } from '../../modules/shops/shop.entity.js';
-import { fullLog, vehicleBasics } from '../common/views.js';
+import { fileView, fullLog, vehicleBasics } from '../common/views.js';
 
 /** Vistas del dueño del taller: ve todo lo de su taller, incluido el desglose y la ganancia. */
 
@@ -24,9 +24,16 @@ export const shopCarSummary = (car: Car, totals: Totals) => ({
   client: { name: car.client!.name, phone: car.client!.phone },
   helper: helperRef(car),
   total: totals.total,
+  signed: car.signature !== null,
 });
 
-export const shopCarDetail = ({ car, costs, log, totals }: CarBundle) => ({
+export const shopCarDetail = ({
+  car,
+  costs,
+  log,
+  files,
+  totals,
+}: CarBundle) => ({
   ...shopCarSummary(car, totals),
   qrToken: car.qrToken,
   km: car.km,
@@ -50,6 +57,10 @@ export const shopCarDetail = ({ car, costs, log, totals }: CarBundle) => ({
   })),
   totals,
   log: fullLog(log),
+  files: files.map(fileView),
+  signature: car.signature,
+  signedAt: car.signedAt,
+  signedClauses: car.signedClauses,
   allowedNext: allowedNext(car.state),
 });
 
@@ -80,7 +91,7 @@ export const shopVehicle = (v: Vehicle, visits: Car[]) => ({
   })),
 });
 
-export const shopHelper = (h: Helper) => ({
+export const shopHelper = (h: Helper, photoId: string | null = null) => ({
   id: h.id,
   name: h.name,
   phone: h.phone,
@@ -88,6 +99,7 @@ export const shopHelper = (h: Helper) => ({
   payAmount: h.payAmount,
   payPct: h.payPct,
   active: h.user?.active ?? false,
+  photoId,
 });
 
 export const shopPayment = (p: HelperPayment) => ({
@@ -106,4 +118,5 @@ export const shopSettings = (s: Shop) => ({
   ivaPct: s.ivaPct,
   hours: s.hours,
   specialties: s.specialties,
+  clauses: s.clauses,
 });

@@ -95,7 +95,9 @@ Por coche, en `helper_payments` (taller, expediente, ayudante, monto, `paidAt`; 
 
 ### Archivos
 
-Una sola tabla `files` (hecha) reemplaza `car_photos`, `car_logs.photos`, `cars.signaturePath` y `helpers.photo`. El tipo (`kind`) decide a qué pertenece y un `CHECK` lo obliga: entrada, pieza dañada, pieza nueva y firma → coche; avance → entrada de la bitácora; ayudante → ayudante; taller → perfil del taller. Hay una sola firma por expediente. Las referencias son compuestas (`(carId, shopId)`, `(carLogId, carId)`, `(helperId, shopId)`), así que la base rechaza archivos que mezclen talleres o coches. `visibleToClient` es falso por defecto. La clave en el almacenamiento la genera el servidor. El contenido vive detrás de una interfaz `Storage` (pendiente). Disco local al inicio. Las descargas pasan por autorización o URL firmada de vida corta; nunca se sirven como estáticos públicos.
+Una sola tabla `files` (hecha) reemplaza `car_photos`, `car_logs.photos`, `cars.signaturePath` y `helpers.photo`. El tipo (`kind`) decide a qué pertenece y un `CHECK` lo obliga: entrada, pieza dañada, pieza nueva y firma → coche; avance → entrada de la bitácora; ayudante → ayudante; taller → perfil del taller. Hay una sola firma por expediente. Las referencias son compuestas (`(carId, shopId)`, `(carLogId, carId)`, `(helperId, shopId)`), así que la base rechaza archivos que mezclen talleres o coches. `visibleToClient` es falso por defecto. La clave en el almacenamiento la genera el servidor. El contenido vive detrás de la interfaz `Storage` (`LocalDiskStorage` en `STORAGE_DIR`; cambiar a S3/R2 es otra implementación). Solo imágenes JPEG, PNG, WebP o HEIC de hasta 10 MB, detectadas por sus bytes (nunca por el nombre o el tipo que declare el cliente), y hasta 100 por expediente. Se descargan por `/<superficie>/files/:id/content` con el mismo filtro de acceso que los expedientes; nunca se sirven como estáticos.
+
+**Firma:** no es un archivo. Se guarda como trazos SVG en `cars.signature` (JSON), junto con `signedAt` y `signedClauses` (las cláusulas del taller tal como estaban al firmar: lo que el cliente aceptó). Los trazos solo aceptan el formato `M x,y L x,y …` porque la hoja de recepción los inserta en `<path d="…">`. Se puede volver a firmar solo mientras el coche está en Recibido.
 
 ## 4. Superficies de API por audiencia
 
@@ -113,9 +115,9 @@ Cada superficie tiene su archivo `views.ts` con funciones que arman la respuesta
 
 | Superficie | Rutas |
 |---|---|
-| `/shop` (rol taller) | `GET/POST /shop/cars` (tablero: sin filtro, los que siguen en el taller; `?state=` una etapa), `GET/PATCH /shop/cars/:id`, `PUT /shop/cars/:id/costs`, `POST /shop/cars/:id/state`, `POST /shop/cars/:id/notes`, `POST /shop/cars/:id/qr` (regenera el QR), `GET /shop/vehicles?q=` (placas, VIN o teléfono), `GET /shop/vehicles/:id` (historial de visitas), `GET /shop/reports?from=&to=`, `GET/POST /shop/helpers`, `PATCH /shop/helpers/:id` (tarifa, nombre, `active`), `GET /shop/payments?helperId=&pending=`, `POST /shop/payments/:id/pay`, `GET/PATCH /shop/settings` (IVA, horario, especialidades) |
-| `/helper` (rol ayudante) | `GET /helper/cars`, `GET /helper/cars/:id`, `POST /helper/cars/:id/state`, `POST /helper/cars/:id/notes`, `GET /helper/payments` (semana, pendiente, estimado en curso) |
-| `/client` (rol cliente) | `GET /client/cars` (en curso y entregados, de cualquier taller), `GET /client/cars/:id`, `POST /client/cars/link` (escaneo del QR: solo si el teléfono de la cuenta es el del cliente) |
+| `/shop` (rol taller) | `GET/POST /shop/cars` (tablero: sin filtro, los que siguen en el taller; `?state=` una etapa), `GET/PATCH /shop/cars/:id`, `PUT /shop/cars/:id/costs`, `POST /shop/cars/:id/state`, `POST /shop/cars/:id/notes`, `POST /shop/cars/:id/qr` (regenera el QR), `GET /shop/vehicles?q=` (placas, VIN o teléfono), `GET /shop/vehicles/:id` (historial de visitas), `GET /shop/reports?from=&to=`, `GET/POST /shop/helpers`, `PATCH /shop/helpers/:id` (tarifa, nombre, `active`), `GET /shop/payments?helperId=&pending=`, `POST /shop/payments/:id/pay`, `GET/PATCH /shop/settings` (IVA, horario, especialidades, cláusulas), `PUT /shop/cars/:id/signature`, `POST /shop/cars/:id/files` (multipart), `PATCH/DELETE /shop/files/:id`, `GET /shop/files/:id/content`, `POST /shop/helpers/:id/photo` |
+| `/helper` (rol ayudante) | `GET /helper/cars`, `GET /helper/cars/:id`, `POST /helper/cars/:id/state`, `POST /helper/cars/:id/notes`, `GET /helper/payments` (semana, pendiente, estimado en curso), `POST /helper/cars/:id/files` (nunca visibles para el cliente), `GET /helper/files/:id/content` |
+| `/client` (rol cliente) | `GET /client/cars` (en curso y entregados, de cualquier taller), `GET /client/cars/:id`, `POST /client/cars/link` (escaneo del QR: solo si el teléfono de la cuenta es el del cliente), `GET /client/files/:id/content` (solo fotos visibles) |
 | `/public` (sin sesión) | `GET /public/q/:token` (etapa y línea de tiempo; 30 por minuto por IP) |
 | `/admin` (rol admin) | `/admin/shops` (alta, lista, estado) y `GET /admin/stats` (solo conteos) |
 
@@ -156,7 +158,7 @@ El INE no se guarda en la app (decisión del PDF: mejor no pedirlo).
 1. **Fase 0 (cerrar):** revisión de seguridad de `auth/`, invitación al dueño, estado `baja`, borrado de cuenta.
 2. **Fase 1, esquema:** ~~clientes y vehículos, tabla `files`, `helper_payments`~~ (hecho).
 3. ~~**Fase 1, lógica:** `pricing/` y máquina de estados, con pruebas~~ (hecho).
-4. **Fase 1, API:** ~~pruebas de privacidad, `/shop`, `/helper`~~ (hecho) → fotos y firma (interfaz `Storage`, subida, descarga con autorización).
+4. **Fase 1, API:** ~~pruebas de privacidad, `/shop`, `/helper`~~ (hecho) ~~fotos y firma~~ (hecho).
 5. **Conectar el frontend** (reemplazar `store/app.tsx`).
 6. **Fase 2:** ~~`/public/q`, vinculación del QR, `/client`~~ (hecho) → avisos (push / WhatsApp).
 7. **Fase 3:** mapa por radio, perfil público, insignia de verificado, aprobación de presupuesto.

@@ -8,6 +8,10 @@ export default defineConfig({
     root: './',
     include: ['dist-e2e/test/**/*.e2e-spec.js'],
     fileParallelism: false,
-    env: { NODE_ENV: 'test', DB_NAME: 'tecnocar_test' },
+    env: {
+      NODE_ENV: 'test',
+      DB_NAME: 'tecnocar_test',
+      STORAGE_DIR: './dist-e2e/storage',
+    },
   },
 });

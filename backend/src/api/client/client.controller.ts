@@ -7,7 +7,9 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { IsString, MaxLength, MinLength } from 'class-validator';
 import { DataSource, In, IsNull } from 'typeorm';
 import type { AuthUser } from '../../auth/auth-user.js';
@@ -16,7 +18,9 @@ import { Roles } from '../../auth/decorators/roles.decorator.js';
 import { Car } from '../../modules/cars/car.entity.js';
 import { CarsService } from '../../modules/cars/cars.service.js';
 import { Client } from '../../modules/clients/client.entity.js';
+import { FilesService } from '../../modules/files/files.service.js';
 import { User } from '../../modules/users/user.entity.js';
+import { sendImage } from '../common/files.js';
 import { clientCarDetail, clientCarSummary } from './views.js';
 
 class LinkDto {
@@ -33,6 +37,7 @@ export class ClientController {
   constructor(
     private readonly cars: CarsService,
     private readonly db: DataSource,
+    private readonly files: FilesService,
   ) {}
 
   private async clientIds(user: AuthUser) {
@@ -59,6 +64,25 @@ export class ClientController {
     const ids = await this.clientIds(user);
     if (!ids.length) throw new NotFoundException('Expediente no encontrado');
     return clientCarDetail(await this.cars.bundle({ id, clientId: In(ids) }));
+  }
+
+  /** Solo fotos marcadas como visibles de sus propios coches. */
+  @Get('files/:id/content')
+  async content(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const ids = await this.clientIds(user);
+    if (!ids.length) throw new NotFoundException('Archivo no encontrado');
+    return sendImage(
+      res,
+      await this.files.read({
+        id,
+        visibleToClient: true,
+        car: { clientId: In(ids) },
+      }),
+    );
   }
 
   /**

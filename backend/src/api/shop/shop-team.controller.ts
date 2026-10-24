@@ -7,13 +7,20 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { IsNull, Not } from 'typeorm';
 import type { AuthUser } from '../../auth/auth-user.js';
 import { CurrentUser } from '../../auth/decorators/current-user.decorator.js';
 import { Roles } from '../../auth/decorators/roles.decorator.js';
+import {
+  FilesService,
+  type UploadedImage,
+} from '../../modules/files/files.service.js';
 import { HelpersService } from '../../modules/helpers/helpers.service.js';
 import { ShopsService } from '../../modules/shops/shops.service.js';
+import { ImageUpload } from '../common/files.js';
 import { shopOf } from '../common/session.js';
 import {
   HelperDto,
@@ -30,11 +37,30 @@ export class ShopTeamController {
   constructor(
     private readonly helpers: HelpersService,
     private readonly shops: ShopsService,
+    private readonly files: FilesService,
   ) {}
 
   @Get('helpers')
   async list(@CurrentUser() user: AuthUser) {
-    return (await this.helpers.list(shopOf(user))).map(shopHelper);
+    const shopId = shopOf(user);
+    const [helpers, photos] = await Promise.all([
+      this.helpers.list(shopId),
+      this.files.helperPhotos(shopId),
+    ]);
+    return helpers.map((h) => shopHelper(h, photos.get(h.id) ?? null));
+  }
+
+  /** Foto del ayudante (multipart, campo `file`); reemplaza la anterior. Se ve en /shop/files/:id/content. */
+  @Post('helpers/:id/photo')
+  @UseInterceptors(ImageUpload())
+  async photo(
+    @CurrentUser() user: AuthUser,
+    @Param('id', ParseUUIDPipe) id: string,
+    @UploadedFile() file: UploadedImage | undefined,
+  ) {
+    const shopId = shopOf(user);
+    const saved = await this.files.uploadHelperPhoto(user, shopId, id, file);
+    return shopHelper(await this.helpers.findOne(shopId, id), saved.id);
   }
 
   /** Alta del ayudante con su cuenta: entra con su propio teléfono. */

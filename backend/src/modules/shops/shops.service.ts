@@ -66,7 +66,9 @@ export class ShopsService {
   /** Ajustes que el dueño cambia de su propio taller. */
   async updateSettings(
     id: string,
-    changes: Partial<Pick<Shop, 'ivaPct' | 'hours' | 'specialties'>>,
+    changes: Partial<
+      Pick<Shop, 'ivaPct' | 'hours' | 'specialties' | 'clauses'>
+    >,
   ) {
     if (Object.keys(changes).length) await this.shops.update({ id }, changes);
     return this.findOne(id);

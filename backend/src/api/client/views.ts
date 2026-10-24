@@ -29,15 +29,37 @@ export const clientCarSummary = (car: Car, totals: Totals) => ({
   total: visibleTotal(car, totals),
 });
 
-export const clientCarDetail = ({ car, log, totals }: CarBundle) => ({
-  ...clientCarSummary(car, totals),
-  description: car.clientDescription,
-  client: {
-    name: car.client!.name,
-    phone: car.client!.phone,
-    address: car.client!.address,
-  },
-  timeline: log
-    .filter((l) => l.visibleToClient)
-    .map((l) => ({ state: l.state, at: l.at, note: l.note })),
-});
+export const clientCarDetail = ({ car, log, files, totals }: CarBundle) => {
+  const visibleLog = log.filter((l) => l.visibleToClient);
+  const visibleLogIds = new Set(visibleLog.map((l) => l.id));
+  return {
+    ...clientCarSummary(car, totals),
+    description: car.clientDescription,
+    client: {
+      name: car.client!.name,
+      phone: car.client!.phone,
+      address: car.client!.address,
+    },
+    timeline: visibleLog.map((l) => ({
+      id: l.id,
+      state: l.state,
+      at: l.at,
+      note: l.note,
+    })),
+    // Solo las fotos marcadas como visibles, y las de avance solo si su nota también lo es.
+    files: files
+      .filter(
+        (f) =>
+          f.visibleToClient && (!f.carLogId || visibleLogIds.has(f.carLogId)),
+      )
+      .map((f) => ({
+        id: f.id,
+        kind: f.kind,
+        logId: f.carLogId,
+        createdAt: f.createdAt,
+      })),
+    /** Cuándo firmó y qué cláusulas aceptó (son suyas); los trazos no hacen falta. */
+    signedAt: car.signedAt,
+    signedClauses: car.signedClauses,
+  };
+};

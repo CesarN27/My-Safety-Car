@@ -19,6 +19,13 @@ import { Shop } from '../shops/shop.entity.js';
 import { CarLog } from './car-log.entity.js';
 import { CostItem } from './cost-item.entity.js';
 
+/** Firma del cliente: trazos SVG (`M x,y L x,y …`) y el tamaño del recuadro donde se dibujaron. */
+export interface Signature {
+  w: number;
+  h: number;
+  strokes: string[];
+}
+
 export interface Damage {
   id: number;
   x: number;
@@ -94,6 +101,11 @@ export class Car {
   @Column('real', { default: 0 }) fuel: number;
   @Column('jsonb', { default: () => "'[]'" }) damages: Damage[];
   @Column({ default: true }) ivaOn: boolean;
+  /** Firma de recepción; null mientras el cliente no firme. */
+  @Column('jsonb', { nullable: true }) signature: Signature | null;
+  @Column({ type: 'timestamptz', nullable: true }) signedAt: Date | null;
+  /** Las cláusulas del taller tal como estaban cuando el cliente firmó (lo que aceptó). */
+  @Column({ type: 'text', nullable: true }) signedClauses: string | null;
 
   @OneToMany(() => CostItem, (c) => c.car) costs?: CostItem[];
   @OneToMany(() => CarLog, (l) => l.car) log?: CarLog[];

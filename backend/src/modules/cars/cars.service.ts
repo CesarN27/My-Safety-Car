@@ -22,6 +22,7 @@ import {
   ClientsService,
 } from '../clients/clients.service.js';
 import { Vehicle } from '../clients/vehicle.entity.js';
+import { StoredFile } from '../files/stored-file.entity.js';
 import { HelperPayment } from '../helpers/helper-payment.entity.js';
 import { Helper } from '../helpers/helper.entity.js';
 import { computeTotals, type Totals } from '../pricing/pricing.js';
@@ -32,7 +33,7 @@ import {
   STATE_NAMES,
   type TransitionError,
 } from './car-state.js';
-import { Car, type Damage } from './car.entity.js';
+import { Car, type Damage, type Signature } from './car.entity.js';
 import { CostItem } from './cost-item.entity.js';
 
 export interface VehicleInput {
@@ -83,6 +84,8 @@ export interface CarBundle {
   car: Car;
   costs: CostItem[];
   log: CarLog[];
+  /** Fotos del expediente (metadatos); cada vista decide cuáles mostrar. */
+  files: StoredFile[];
   totals: Totals;
 }
 
@@ -335,6 +338,28 @@ export class CarsService {
     return this.bundle({ ...where, id } as FindOptionsWhere<Car>);
   }
 
+  /**
+   * Firma de recepción. Guarda también las cláusulas vigentes del taller en ese momento: es lo
+   * que el cliente aceptó, aunque el taller las cambie después. Se puede volver a firmar solo
+   * mientras el coche sigue en Recibido.
+   */
+  async sign(shopId: string, id: string, signature: Signature) {
+    await this.db.transaction(async (tx) => {
+      const car = await this.lockOpen(tx, { id, shopId });
+      if (car.signature && car.state !== 0)
+        throw new ConflictException(
+          'El expediente ya está firmado; solo se puede volver a firmar en Recibido',
+        );
+      const shop = await tx.findOneByOrFail(Shop, { id: shopId });
+      await tx.update(
+        Car,
+        { id: car.id },
+        { signature, signedAt: new Date(), signedClauses: shop.clauses },
+      );
+    });
+    return this.bundle({ id, shopId });
+  }
+
   /** Nuevo token de QR: el anterior deja de funcionar al instante. */
   async rotateQr(shopId: string, id: string) {
     await this.db.transaction(async (tx) => {
@@ -354,18 +379,28 @@ export class CarsService {
   }
 
   private async withMoney(tx: EntityManager, car: Car): Promise<CarBundle> {
-    const [costs, log, payments] = await Promise.all([
+    const [costs, log, payments, files] = await Promise.all([
       tx.find(CostItem, {
         where: { carId: car.id },
         order: { position: 'ASC' },
       }),
       tx.find(CarLog, { where: { carId: car.id }, order: { at: 'ASC' } }),
       tx.findBy(HelperPayment, { carId: car.id }),
+      tx.find(StoredFile, {
+        where: { carId: car.id },
+        order: { createdAt: 'ASC' },
+      }),
     ]);
     car.shop ??= (await tx.findOneByOrFail(Shop, { id: car.shopId })) as Shop;
     if (car.helperId && car.helper === undefined)
       car.helper = await tx.findOneBy(Helper, { id: car.helperId });
-    return { car, costs, log, totals: this.totalsOf(car, costs, payments) };
+    return {
+      car,
+      costs,
+      log,
+      files,
+      totals: this.totalsOf(car, costs, payments),
+    };
   }
 
   private totalsOf(car: Car, costs: CostItem[], payments: HelperPayment[]) {

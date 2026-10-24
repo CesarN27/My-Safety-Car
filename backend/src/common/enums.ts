@@ -18,14 +18,14 @@ export type InspState = 0 | 1 | 2;
 
 /**
  * Tipo de archivo, que decide a qué pertenece:
- * entrada / pieza_danada / pieza_nueva / firma → coche · avance → entrada de la bitácora ·
+ * entrada / pieza_danada / pieza_nueva → coche · avance → entrada de la bitácora ·
  * ayudante → foto del ayudante · taller → foto del perfil público del taller.
+ * La firma no es un archivo: se guarda como trazos en `cars.signature`.
  */
 export const FILE_KINDS = [
   'entrada',
   'pieza_danada',
   'pieza_nueva',
-  'firma',
   'avance',
   'ayudante',
   'taller',

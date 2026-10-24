@@ -1,3 +1,6 @@
 .env
 uploads/
 dist-e2e/
+
+# Fotos subidas en desarrollo (STORAGE_DIR)
+/storage/

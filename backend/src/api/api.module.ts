@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CarsModule } from '../modules/cars/cars.module.js';
 import { ClientsModule } from '../modules/clients/clients.module.js';
+import { FilesModule } from '../modules/files/files.module.js';
 import { HelpersModule } from '../modules/helpers/helpers.module.js';
 import { ShopsModule } from '../modules/shops/shops.module.js';
 import { AdminStatsController } from './admin/admin-stats.controller.js';
@@ -15,7 +16,7 @@ import { ShopTeamController } from './shop/shop-team.controller.js';
  * Cada una arma sus respuestas con sus propias vistas; la lógica vive en los módulos de dominio.
  */
 @Module({
-  imports: [CarsModule, ClientsModule, HelpersModule, ShopsModule],
+  imports: [CarsModule, ClientsModule, FilesModule, HelpersModule, ShopsModule],
   controllers: [
     ShopCarsController,
     ShopTeamController,

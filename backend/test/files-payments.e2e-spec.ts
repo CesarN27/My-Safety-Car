@@ -47,11 +47,6 @@ describe('Archivos y pagos a ayudantes (esquema)', () => {
       await file('taller', {});
     });
 
-    it('solo permite una firma por expediente', async () => {
-      await file('firma', { carId: f.carDiag.id });
-      await expect(file('firma', { carId: f.carDiag.id })).rejects.toThrow();
-    });
-
     it('rechaza archivos cuyo dueño no corresponde a su tipo', async () => {
       await expect(file('entrada', {})).rejects.toThrow();
       await expect(file('avance', { carId: f.carListo.id })).rejects.toThrow();

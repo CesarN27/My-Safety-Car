@@ -116,6 +116,8 @@ export class ReportQuery {
 
 export class ShopSettingsDto {
   @IsOptional() @IsNumber(money) @Min(0) @Max(100) ivaPct?: number;
+  /** Cláusulas de la orden que el cliente acepta al firmar. */
+  @IsOptional() @IsString() @MaxLength(10_000) clauses?: string;
   @IsOptional() @IsString() @MaxLength(100) hours?: string;
   @IsOptional()
   @IsArray()

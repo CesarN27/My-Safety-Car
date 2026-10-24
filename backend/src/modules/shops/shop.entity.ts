@@ -25,6 +25,8 @@ export class Shop {
   @Column() hours: string;
   @Column('double precision') lat: number;
   @Column('double precision') lng: number;
+  /** Cláusulas de la orden (objetos olvidados, robo, garantía…) que el cliente acepta al firmar. */
+  @Column({ type: 'text', default: '' }) clauses: string;
   /** Siguiente folio de expediente; se toma y se incrementa en la misma sentencia. */
   @Column({ type: 'int', default: 1 }) nextFolio: number;
   /** Tasa de IVA del taller, en porcentaje (16 general, 8 en la frontera). */

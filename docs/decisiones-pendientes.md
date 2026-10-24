@@ -14,7 +14,6 @@ Preguntas abiertas del proyecto. Cuando se resuelva una, se borra de aquí y se 
 8. **Costos en Listo y expedientes entregados.** *Valor por defecto:* en Listo para entrega no se cambian costos (el cliente ya ve el total; hay que regresar a En reparación) y un expediente entregado ya no se modifica. Confirmar.
 9. **Qué ve la página pública del QR.** *Valor por defecto:* etapa actual, línea de tiempo de cambios de etapa (sin notas), nombre y teléfono del taller, marca y modelo. Sin placas, nombre del cliente ni dinero. Deja de funcionar al entregar o al regenerar el QR.
 10. **Escaneos OBD del frontend.** El frontend registra escaneos de diagnóstico (`Scan`: códigos de falla, nota, foto); el backend todavía no los tiene. Decidir si entran en la fase 1 (tabla `car_scans`) o después.
-11. **Firma.** El frontend guarda la firma como trazos SVG (`Signature`), no como imagen. Decidir al hacer la subida de archivos: guardar los trazos como JSON en el expediente, o convertirlos a imagen en `files` (kind `firma`).
 
 ## Datos y esquema
 

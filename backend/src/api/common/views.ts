@@ -1,3 +1,4 @@
+import type { StoredFile } from '../../modules/files/stored-file.entity.js';
 import type { CarLog } from '../../modules/cars/car-log.entity.js';
 import type { Car } from '../../modules/cars/car.entity.js';
 
@@ -25,3 +26,14 @@ export const fullLog = (log: CarLog[]) =>
     note: l.note,
     visibleToClient: l.visibleToClient,
   }));
+
+/** Metadatos de una foto; el contenido se pide aparte a `/<superficie>/files/:id/content`. */
+export const fileView = (f: StoredFile) => ({
+  id: f.id,
+  kind: f.kind,
+  logId: f.carLogId,
+  visibleToClient: f.visibleToClient,
+  mimeType: f.mimeType,
+  size: f.size,
+  createdAt: f.createdAt,
+});
