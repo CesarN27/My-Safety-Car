@@ -5,7 +5,7 @@ import { MAP_BASE_URL, MAP_HTML, jsLiteral, type MapEvent, type MapState } from 
 
 /** iOS/Android: Leaflet + OpenStreetMap dentro de un WebView. La versión web está en map-surface.web.tsx. */
 export function MapSurface({ state, onEvent }: { state: MapState; onEvent: (e: MapEvent) => void }) {
-  const ref = useRef<WebView>(null);
+  const ref = useRef<WebView<object>>(null);
   const [ready, setReady] = useState(false);
   const payload = jsLiteral(state);
 
@@ -23,8 +23,9 @@ export function MapSurface({ state, onEvent }: { state: MapState; onEvent: (e: M
     }
   };
 
+  // react-native-webview 14 declara WebView<P = undefined>, que da props `never`: se pasa el genérico.
   return (
-    <WebView
+    <WebView<object>
       ref={ref}
       source={{ html: MAP_HTML, baseUrl: MAP_BASE_URL }}
       originWhitelist={['*']}
